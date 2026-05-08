@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/report",
+      "schedule": "0 8 */3 * *"
+    },
+    {
+      "path": "/api/cron/collect/shopify",
+      "schedule": "0 */1 * * *"
+    },
+    {
+      "path": "/api/cron/collect/reviews",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
