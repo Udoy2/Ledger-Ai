@@ -1,0 +1,55 @@
+{
+  "bestsellers": [
+    {
+      "product": "Classic Hoodie",
+      "units_sold": 1240,
+      "revenue": 49580.00
+    },
+    {
+      "product": "Slim Fit Chinos",
+      "units_sold": 980,
+      "revenue": 34290.00
+    },
+    {
+      "product": "Linen Summer Dress",
+      "units_sold": 870,
+      "revenue": 26100.00
+    },
+    {
+      "product": "Winter Jacket",
+      "units_sold": 630,
+      "revenue": 56700.00
+    },
+    {
+      "product": "Canvas Sneakers",
+      "units_sold": 590,
+      "revenue": 23600.00
+    }
+  ],
+  "abandoned_carts": [
+    {
+      "product": "Premium Leather Boots",
+      "count": 412,
+      "avg_cart_value": 128.50
+    },
+    {
+      "product": "Wool Blend Coat",
+      "count": 389,
+      "avg_cart_value": 214.00
+    },
+    {
+      "product": "Classic Hoodie",
+      "count": 301,
+      "avg_cart_value": 42.00
+    },
+    {
+      "product": "Running Shorts",
+      "count": 278,
+      "avg_cart_value": 35.00
+    }
+  ],
+  "period": {
+    "start": "2024-01-01",
+    "end": "2024-02-15"
+  }
+}

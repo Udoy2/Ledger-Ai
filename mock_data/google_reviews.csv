@@ -1,0 +1,16 @@
+id,source,author,star_rating,text,date
+gr001,google_reviews,Sarah Mitchell,5,"Absolutely love their products! The quality is unmatched and packaging was pristine. Will definitely order again.",2024-01-15
+gr002,google_reviews,James Thornton,1,"Ordered 10 days ago and still no delivery. Support team gave me the runaround. Completely unacceptable shipping times.",2024-01-18
+gr003,google_reviews,Priya Nair,4,"Great product quality overall. Took a bit longer than expected to arrive but worth the wait. Would recommend.",2024-01-20
+gr004,google_reviews,Carlos Rivera,2,"Delivery took 3 weeks. The item itself was fine but the wait nearly killed me. Please fix your logistics.",2024-01-22
+gr005,google_reviews,Emily Zhao,5,"Customer service went above and beyond when I had a sizing issue. They sent a replacement same day. 10/10.",2024-01-25
+gr006,google_reviews,Daniel Osei,1,"My order arrived damaged and when I tried to return it nobody could tell me the process. Returns policy is a nightmare.",2024-01-27
+gr007,google_reviews,Olivia Hartmann,5,"Best online shopping experience I've had in years. Fast shipping for once and product quality is top tier.",2024-01-29
+gr008,google_reviews,Marcus Webb,2,"Product looked nothing like the photos. Very disappointed. Tried to return but the return process is too complicated.",2024-01-31
+gr009,google_reviews,Aisha Kamara,4,"Love the product range. Shipping was a little slow but nothing too bad. Return policy could be clearer on the website.",2024-02-02
+gr010,google_reviews,Tom Becker,5,"Incredible quality and fast delivery this time! Had a bad experience before but this order restored my faith.",2024-02-05
+gr011,google_reviews,Nina Patel,1,"Waited 3 weeks for delivery, no tracking updates, support was useless. Never ordering again.",2024-02-07
+gr012,google_reviews,Leo Fontaine,4,"Product quality is genuinely excellent. My only gripe is delivery speed — took 12 days. Needs improvement.",2024-02-09
+gr013,google_reviews,Rachel Kim,5,"Flawless experience from start to finish. Ordered Saturday, arrived Monday. Products are beautiful.",2024-02-11
+gr014,google_reviews,Ahmed Hassan,3,"Decent product but I'm still confused about how to initiate a return. The website isn't clear about the steps.",2024-02-13
+gr015,google_reviews,Chloe Dumont,2,"Shipping speed is terrible. Took 18 days to arrive. Product was okay but the wait ruined the experience for me.",2024-02-15

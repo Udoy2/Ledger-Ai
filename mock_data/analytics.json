@@ -1,0 +1,62 @@
+{
+  "pages": [
+    {
+      "page": "/home",
+      "views": 12480,
+      "bounce_rate": 0.38,
+      "avg_session": 142
+    },
+    {
+      "page": "/products",
+      "views": 9310,
+      "bounce_rate": 0.27,
+      "avg_session": 218
+    },
+    {
+      "page": "/product/classic-hoodie",
+      "views": 6740,
+      "bounce_rate": 0.31,
+      "avg_session": 195
+    },
+    {
+      "page": "/cart",
+      "views": 3890,
+      "bounce_rate": 0.52,
+      "avg_session": 87
+    },
+    {
+      "page": "/checkout",
+      "views": 2105,
+      "bounce_rate": 0.61,
+      "avg_session": 64
+    },
+    {
+      "page": "/returns",
+      "views": 1870,
+      "bounce_rate": 0.44,
+      "avg_session": 110
+    }
+  ],
+  "top_traffic_sources": [
+    {
+      "source": "Organic Search",
+      "percentage": 42.5,
+      "sessions": 18320
+    },
+    {
+      "source": "Social Media",
+      "percentage": 28.1,
+      "sessions": 12140
+    },
+    {
+      "source": "Direct",
+      "percentage": 19.3,
+      "sessions": 8330
+    }
+  ],
+  "week_over_week": {
+    "total_sessions_this_week": 43190,
+    "total_sessions_last_week": 38750,
+    "change_percent": 11.5
+  }
+}
