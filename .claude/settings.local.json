@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(kill bug8fs8vh *)",
+      "Bash(tasklist)",
+      "Bash(findstr node *)",
+      "Bash(taskkill *)",
+      "Bash(curl *)",
+      "Bash(npm list *)",
+      "Bash(npm show *)"
+    ]
+  }
+}

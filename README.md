@@ -42,6 +42,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 GROQ_API_KEY=
 CRON_SECRET=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 `GROQ_API_KEY` is optional for demo flow. Without it, the app generates a deterministic fallback report.
@@ -58,16 +59,20 @@ npm run dev
 - Create a workspace
 - Click `Load demo data`
 - Click `Generate report`
-- Review the AI report, signal feed, and recurring themes
+- Use `RAG Chat` to ask follow-up business questions grounded in stored vectors
+- Click `Sync GA test data` to append fresh analytics-style signals (also schedulable every 24h)
 
 ## API Endpoints
 
 - `POST /api/ingest`: ingest one authenticated signal
 - `POST /api/seed`: load demo signals for the current business
 - `POST /api/report/generate`: generate and save an insight report
+- `POST /api/chat`: business-scoped RAG chat over Pinecone vectors
+- `POST /api/integrations/ga4/connect`: GA4 connect scaffold endpoint (test mode response)
 - `GET /api/cron/report`: cron placeholder for batch report generation
 - `GET /api/cron/collect/shopify`: cron placeholder for store polling
 - `GET /api/cron/collect/reviews`: cron placeholder for review polling
+- `GET or POST /api/cron/collect/ga4`: appends test GA-style daily signals for all businesses and indexes to Pinecone
 
 ## Next Integration Work
 

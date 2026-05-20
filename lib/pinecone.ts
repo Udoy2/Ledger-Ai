@@ -1,39 +1,57 @@
-import { PineconeClient } from "@pinecone-database/pinecone";
+import { Pinecone } from "@pinecone-database/pinecone";
 
 // Initialise Pinecone client using env vars from .env.local
-const pinecone = new PineconeClient();
-await pinecone.init({
-  apiKey: process.env.PINECONE_API_KEY!,
-  environment: process.env.PINECONE_ENV!, // e.g., "us-east-1-aws"
-});
+// The SDK will automatically read PINECONE_API_KEY from environment variables
+const pinecone = new Pinecone();
 
 const index = pinecone.Index(process.env.PINECONE_INDEX!);
+
+type VectorRecord = {
+  id: string;
+  values: number[];
+  metadata: Record<string, any>;
+};
+
+function scopedIndex(namespace?: string) {
+  return namespace ? index.namespace(namespace) : index;
+}
 
 /** Upsert a single vector with metadata */
 export async function upsertVector(
   id: string,
   values: number[],
-  metadata: Record<string, any>
+  metadata: Record<string, any>,
+  namespace?: string
 ) {
-  await index.upsert({
-    upsertRequest: {
-      vectors: [{ id, values, metadata }],
-    },
+  await scopedIndex(namespace).upsert({
+    records: [{ id, values, metadata }],
   });
+}
+
+/** Upsert many vectors in batches */
+export async function upsertVectors(records: VectorRecord[], namespace?: string) {
+  if (records.length === 0) return;
+  const client = scopedIndex(namespace);
+  const batchSize = 50;
+  for (let i = 0; i < records.length; i += batchSize) {
+    await client.upsert({
+      records: records.slice(i, i + batchSize),
+    });
+  }
 }
 
 /** Query similar vectors */
 export async function queryVector(
   queryValues: number[],
   topK: number = 5,
-  includeMetadata: boolean = true
+  includeMetadata: boolean = true,
+  opts?: { namespace?: string; filter?: Record<string, any> }
 ) {
-  const resp = await index.query({
-    queryRequest: {
-      vector: queryValues,
-      topK,
-      includeMetadata,
-    },
+  const resp = await scopedIndex(opts?.namespace).query({
+    vector: queryValues,
+    topK,
+    includeMetadata,
+    filter: opts?.filter,
   });
   return resp.matches;
 }

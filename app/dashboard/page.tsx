@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { AlertTriangle, BarChart3, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
 import { logoutAction } from '@/app/auth/actions';
 import { DashboardActions } from '@/components/DashboardClient';
+import { RagChat } from '@/components/RagChat';
 import { getAuthedBusiness } from '@/lib/auth';
 import { demoSignals } from '@/lib/demo';
 import { hasSupabaseEnv } from '@/lib/env';
@@ -180,6 +181,7 @@ export default async function DashboardPage() {
               </div>
             )}
           </div>
+          <RagChat />
 
           <div className="border border-line bg-white p-5">
             <h2 className="text-xl font-black text-ink">Signal Feed</h2>
@@ -223,6 +225,7 @@ export default async function DashboardPage() {
             <p className="mt-2 text-sm leading-6 text-slate-500">The MVP data layer is ready. OAuth collectors are represented as connection slots and cron endpoints.</p>
             <div className="mt-4 space-y-3">
               <IntegrationCard name="Demo Data" status="ready" detail="One-click seed for validating the core loop." />
+              <IntegrationCard name="GA4 Test Collector" status="ready" detail="Appends fresh analytics-like signals every sync run (24h schedule supported)." />
               <IntegrationCard name="Shopify / WooCommerce" status="soon" detail="Orders, products, carts, repeat buyers." />
               <IntegrationCard name="Google Reviews" status="soon" detail="Star ratings, praise, complaints, recurring themes." />
               <IntegrationCard name="Facebook / Instagram" status="soon" detail="Comments, objections, engagement patterns." />

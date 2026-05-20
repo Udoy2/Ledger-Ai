@@ -1,54 +1,99 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
-import { generateInsightReport } from '@/lib/groq';
+import { fallbackReport, getGroq } from '@/lib/groq';
+import { getEmbedding } from '@/lib/embeddings';
+import { queryVector } from '@/lib/pinecone';
+import { buildRagContext, vectorNamespaceForBusiness } from '@/lib/rag';
+import { backfillSignalsToPinecone } from '@/lib/backfill';
 import type { Signal } from '@/lib/types';
 
-export async function POST() {
+export async function POST(request: Request) {
   const { supabase, business } = await getAuthedBusiness();
   if (!business) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const since = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
-  let { data: signals, error } = await supabase
-    .from('signals')
-    .select('*')
-    .eq('business_id', business.id)
-    .gte('collected_at', since)
-    .order('collected_at', { ascending: false })
-    .limit(80);
+  const body = await request.json().catch(() => ({}));
+  const reportPrompt =
+    typeof body?.prompt === 'string' && body.prompt.trim()
+      ? body.prompt.trim()
+      : 'Generate a comprehensive report on customer signals, risks, opportunities, and actionable next steps.';
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  const queryEmbedding = await getEmbedding(reportPrompt);
+  let matches = await queryVector(queryEmbedding, 24, true, {
+    namespace: vectorNamespaceForBusiness(business.id),
+  });
 
-  if (!signals || signals.length < 5) {
-    const fallback = await supabase
+  if (!matches.length) {
+    const existingSignals = await supabase
       .from('signals')
       .select('*')
       .eq('business_id', business.id)
       .order('collected_at', { ascending: false })
-      .limit(40);
+      .limit(300);
 
-    if (fallback.error) {
-      return NextResponse.json({ error: fallback.error.message }, { status: 500 });
+    if (existingSignals.error) {
+      return NextResponse.json({ error: existingSignals.error.message }, { status: 500 });
+    }
+    if (!existingSignals.data || existingSignals.data.length === 0) {
+      return NextResponse.json({ error: 'Load demo data or ingest signals before generating a report.' }, { status: 400 });
     }
 
-    signals = fallback.data;
+    await backfillSignalsToPinecone(business.id, existingSignals.data as Signal[]);
+    matches = await queryVector(queryEmbedding, 24, true, {
+      namespace: vectorNamespaceForBusiness(business.id),
+    });
+
+    if (!matches.length) {
+      const content = fallbackReport(business, existingSignals.data as Signal[]);
+      const { data: report, error: insertError } = await supabase
+        .from('reports')
+        .insert({
+          business_id: business.id,
+          content,
+          signal_count: existingSignals.data.length,
+        })
+        .select('*')
+        .single();
+
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+      return NextResponse.json({ success: true, report, mode: 'fallback' });
+    }
   }
 
-  if (!signals || signals.length === 0) {
-    return NextResponse.json({ error: 'Load demo data or connect an integration before generating a report.' }, { status: 400 });
+  const context = buildRagContext(matches as Array<{ id?: string; metadata?: Record<string, unknown> }>);
+  const groq = getGroq();
+  if (!groq) {
+    return NextResponse.json({ error: 'Groq not configured' }, { status: 500 });
   }
 
-  const content = await generateInsightReport(business, signals as Signal[]);
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    temperature: 0.3,
+    max_tokens: 1800,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an expert business intelligence analyst. Use only retrieved context. Return markdown with sections: Executive Summary, #1 Problem, #1 Opportunity, What\'s Working, Action List, Signal Summary. Keep recommendations evidence-backed and practical.',
+      },
+      {
+        role: 'user',
+        content: `Business: ${business.name}\nBrand voice: ${business.brand_voice}\n\nRequest: ${reportPrompt}\n\nRetrieved Context:\n${context}`,
+      },
+    ],
+  });
+
+  const content = completion.choices[0]?.message?.content ?? 'Unable to generate report.';
 
   const { data: report, error: insertError } = await supabase
     .from('reports')
     .insert({
       business_id: business.id,
       content,
-      signal_count: signals.length,
+      signal_count: matches.length,
     })
     .select('*')
     .single();
@@ -57,5 +102,10 @@ export async function POST() {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, report });
+  return NextResponse.json({
+    success: true,
+    report,
+    mode: 'rag',
+    retrieved_count: matches.length,
+  });
 }

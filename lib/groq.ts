@@ -7,7 +7,7 @@ const fallbackTag: SignalTag = {
   urgency: 'low',
 };
 
-function getGroq() {
+export function getGroq() {
   if (!process.env.GROQ_API_KEY) return null;
   return new Groq({ apiKey: process.env.GROQ_API_KEY });
 }

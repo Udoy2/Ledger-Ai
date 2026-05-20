@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/collect/reviews",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/collect/ga4",
+      "schedule": "0 2 * * *"
     }
   ]
 }
