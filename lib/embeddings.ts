@@ -26,7 +26,7 @@ function fallbackEmbedding(text: string): number[] {
 
 export async function getEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_EMBED_MODEL || 'text-embedding-3-small';
+  const model = process.env.GROQ_EMBED_MODEL || 'llama3-text-embed-v2';
   if (!apiKey) return fallbackEmbedding(text);
 
   try {

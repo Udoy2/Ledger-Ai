@@ -1,14 +1,24 @@
 import { redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import ReactMarkdown from 'react-markdown';
-import { AlertTriangle, BarChart3, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
+import { AlertTriangle, BarChart3, BookText, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
 import { logoutAction } from '@/app/auth/actions';
 import { DashboardActions } from '@/components/DashboardClient';
-import { RagChat } from '@/components/RagChat';
 import { getAuthedBusiness } from '@/lib/auth';
 import { demoSignals } from '@/lib/demo';
 import { hasSupabaseEnv } from '@/lib/env';
 import { fallbackReport } from '@/lib/groq';
-import type { Report, Signal } from '@/lib/types';
+import type { AiRun, Memory, Recommendation, Report, Signal, ToolCall } from '@/lib/types';
+
+const RagChat = dynamic(() => import('@/components/RagChat').then((m) => m.RagChat), {
+  ssr: false,
+  loading: () => <div className="border border-line bg-white p-5 text-sm text-slate-500">Loading chat...</div>,
+});
+
+const FaqSetupPanel = dynamic(() => import('@/components/FaqSetupPanel').then((m) => m.FaqSetupPanel), {
+  ssr: false,
+  loading: () => <div className="border border-line bg-white p-5 text-sm text-slate-500">Loading FAQ setup...</div>,
+});
 
 const sourceLabels: Record<string, string> = {
   google_review: 'Google Review',
@@ -17,6 +27,9 @@ const sourceLabels: Record<string, string> = {
   shopify: 'Shopify',
   support_chat: 'Support Chat',
   google_analytics: 'GA4',
+  microsoft_clarity: 'Microsoft Clarity',
+  website_faq_agent: 'Website FAQ Agent',
+  website_faq_docs: 'FAQ Knowledge Doc',
 };
 
 const sourceIcons: Record<string, typeof Star> = {
@@ -26,6 +39,9 @@ const sourceIcons: Record<string, typeof Star> = {
   shopify: ShoppingCart,
   support_chat: AlertTriangle,
   google_analytics: TrendingUp,
+  microsoft_clarity: TrendingUp,
+  website_faq_agent: PlugZap,
+  website_faq_docs: BookText,
 };
 
 function pct(part: number, total: number) {
@@ -85,19 +101,24 @@ export default async function DashboardPage() {
     signal_count: signalList.length,
     generated_at: new Date().toISOString(),
   };
+  let recommendations: Recommendation[] = [];
+  let latestRun: AiRun | null = null;
+  let toolCalls: ToolCall[] = [];
+  let memories: Memory[] = [];
+  let faqDocsCount = 0;
 
   if (liveBackend) {
     const { supabase, business: authedBusiness } = await getAuthedBusiness();
     if (!authedBusiness) redirect('/auth/login');
     business = authedBusiness;
 
-    const [{ data: signals }, { data: latestReport }] = await Promise.all([
+    const [{ data: signals }, { data: latestReport }, { data: recs }, { data: run }, { data: mems }, { count: docsCount }] = await Promise.all([
       supabase
         .from('signals')
         .select('*')
         .eq('business_id', business.id)
         .order('collected_at', { ascending: false })
-        .limit(30),
+        .limit(20),
       supabase
         .from('reports')
         .select('*')
@@ -105,22 +126,51 @@ export default async function DashboardPage() {
         .order('generated_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from('recommendations')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('created_at', { ascending: false })
+        .limit(6),
+      supabase
+        .from('ai_runs')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('memories')
+        .select('*')
+        .eq('business_id', business.id)
+        .order('created_at', { ascending: false })
+        .limit(6),
+      supabase
+        .from('signals')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', business.id)
+        .eq('source', 'website_faq_docs')
+        .eq('type', 'faq_knowledge_doc'),
     ]);
 
     signalList = (signals ?? []) as Signal[];
     report = latestReport as Report | null;
+    recommendations = (recs ?? []) as Recommendation[];
+    latestRun = (run as AiRun | null) ?? null;
+    memories = (mems ?? []) as Memory[];
+    faqDocsCount = docsCount ?? 0;
+
+    if (latestRun) {
+      const { data } = await supabase
+        .from('tool_calls')
+        .select('*')
+        .eq('ai_run_id', latestRun.id)
+        .order('created_at', { ascending: true });
+      toolCalls = (data ?? []) as ToolCall[];
+    }
   }
   const positive = signalList.filter((signal) => signal.sentiment === 'positive').length;
   const urgent = signalList.filter((signal) => signal.urgency === 'high').length;
-  const topTopics = Object.entries(
-    signalList.flatMap((signal) => signal.topics).reduce<Record<string, number>>((acc, topic) => {
-      acc[topic] = (acc[topic] ?? 0) + 1;
-      return acc;
-    }, {}),
-  )
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-
   return (
     <main className="min-h-screen bg-slate-50">
       <header className="border-b border-line bg-white">
@@ -148,7 +198,7 @@ export default async function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-loop">Owner command center</p>
-              <h2 className="mt-1 text-3xl font-black text-ink">Your latest business read</h2>
+              <h2 className="mt-1 text-3xl font-black text-ink">Personalized Business Analyst</h2>
             </div>
             <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
           </div>
@@ -182,6 +232,36 @@ export default async function DashboardPage() {
             )}
           </div>
           <RagChat />
+          <FaqSetupPanel docsCount={faqDocsCount} />
+
+          <div className="border border-line bg-white p-5">
+            <h2 className="text-xl font-black text-ink">Recommendations</h2>
+            <p className="mt-1 text-sm text-slate-500">Evidence-linked actions generated by the AI CTO run.</p>
+            <div className="mt-4 space-y-3">
+              {recommendations.length === 0 ? (
+                <p className="text-sm text-slate-500">Run AI CTO to generate recommendations with evidence IDs.</p>
+              ) : (
+                recommendations.map((rec) => (
+                  <article key={rec.id} className="border border-line bg-slate-50 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-black text-ink">{rec.title}</p>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">impact: {rec.impact}</span>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">effort: {rec.effort}</span>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">confidence: {Math.round(Number(rec.confidence) * 100)}%</span>
+                    </div>
+                    <p className="mt-2 text-sm text-slate-700">{rec.rationale}</p>
+                    <p className="mt-2 text-xs text-slate-500">Metric: {rec.metric_to_watch || 'n/a'}</p>
+                    <p className="mt-1 text-xs text-slate-500">Next step: {rec.next_step || 'n/a'}</p>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs font-bold text-loop">Evidence drawer</summary>
+                      <p className="mt-1 text-xs text-slate-500">{rec.evidence_note || 'No extra note'}</p>
+                      <p className="mt-1 break-all text-xs text-slate-500">IDs: {rec.evidence_signal_ids.join(', ') || 'n/a'}</p>
+                    </details>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
 
           <div className="border border-line bg-white p-5">
             <h2 className="text-xl font-black text-ink">Signal Feed</h2>
@@ -221,11 +301,21 @@ export default async function DashboardPage() {
 
         <aside className="space-y-6">
           <div className="border border-line bg-white p-5">
-            <h2 className="text-xl font-black text-ink">Integrations</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">The MVP data layer is ready. OAuth collectors are represented as connection slots and cron endpoints.</p>
+            <h2 className="text-xl font-black text-ink">Data Health</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">Connector freshness and source coverage for your AI analyst.</p>
             <div className="mt-4 space-y-3">
               <IntegrationCard name="Demo Data" status="ready" detail="One-click seed for validating the core loop." />
               <IntegrationCard name="GA4 Test Collector" status="ready" detail="Appends fresh analytics-like signals every sync run (24h schedule supported)." />
+              <IntegrationCard name="Clarity Collector" status="ready" detail="Rage clicks, dead clicks, engagement, and top URL friction summaries." />
+              <IntegrationCard name="Website FAQ Widget" status="ready" detail="Embeddable JS iframe chat that stores visitor Q/A back into the hive mind." />
+              <a
+                href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api"
+                target="_blank"
+                rel="noreferrer"
+                className="block border border-line bg-slate-50 px-4 py-3 text-sm font-bold text-loop"
+              >
+                Open Microsoft Clarity API docs
+              </a>
               <IntegrationCard name="Shopify / WooCommerce" status="soon" detail="Orders, products, carts, repeat buyers." />
               <IntegrationCard name="Google Reviews" status="soon" detail="Star ratings, praise, complaints, recurring themes." />
               <IntegrationCard name="Facebook / Instagram" status="soon" detail="Comments, objections, engagement patterns." />
@@ -236,18 +326,36 @@ export default async function DashboardPage() {
           <div className="border border-line bg-ink p-5 text-white">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="text-emerald-300" size={20} />
-              <h2 className="font-black">Recurring themes</h2>
+              <h2 className="font-black">Agent trace + memory</h2>
             </div>
-            <div className="mt-4 space-y-2">
-              {topTopics.length === 0 ? (
-                <p className="text-sm leading-6 text-slate-300">Themes appear after signals are collected.</p>
+            <div className="mt-4 space-y-3">
+              {!latestRun ? (
+                <p className="text-sm leading-6 text-slate-300">Run AI CTO to see orchestration steps and saved memory.</p>
               ) : (
-                topTopics.map(([topic, count]) => (
-                  <div key={topic} className="flex items-center justify-between gap-3 border border-white/10 bg-white/5 px-3 py-2">
-                    <span className="text-sm text-slate-100">{topic}</span>
-                    <span className="text-sm font-black text-emerald-300">{count}</span>
+                <div className="space-y-3">
+                  <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-100">
+                    Run: {latestRun.status} at {new Date(latestRun.started_at).toLocaleString()}
                   </div>
-                ))
+                  <div className="space-y-2">
+                    {toolCalls.map((tc) => (
+                      <div key={tc.id} className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200">
+                        {tc.step} - {tc.tool_name}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {memories.length === 0 ? (
+                      <p className="text-xs text-slate-300">No memory yet.</p>
+                    ) : (
+                      memories.map((memory) => (
+                        <div key={memory.id} className="border border-white/10 bg-white/5 px-3 py-2">
+                          <p className="text-xs font-bold text-emerald-300">{memory.key}</p>
+                          <p className="text-xs text-slate-200">{memory.value}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Activity, DatabaseZap, FileText, Link, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Activity, Bot, DatabaseZap, FileText, Link, RefreshCw } from 'lucide-react';
 
 type DashboardClientProps = {
   hasSignals: boolean;
@@ -22,6 +23,7 @@ async function postJson(path: string, body?: Record<string, unknown>) {
 }
 
 export function DashboardActions({ hasSignals, liveBackend = true }: DashboardClientProps) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,12 +32,29 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       setError(null);
       setPending(true);
       await postJson(path, body);
-      window.location.reload();
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Request failed');
     } finally {
       setPending(false);
     }
+  }
+
+  async function connectClarity() {
+    const token = window.prompt('Paste Microsoft Clarity Data Export API token');
+    if (!token) return;
+    await run('/api/integrations/clarity/connect', { clarity_api_token: token });
+  }
+
+  async function syncClarity() {
+    const raw = window.prompt('Clarity window in days (1-3)', '1');
+    if (!raw) return;
+    const num = Number(raw);
+    if (!Number.isFinite(num) || num < 1 || num > 3) {
+      setError('Clarity numOfDays must be between 1 and 3.');
+      return;
+    }
+    await run('/api/cron/collect/clarity', { numOfDays: num, dimension1: 'URL' });
   }
 
   return (
@@ -63,6 +82,30 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       >
         <Activity size={16} />
         Sync GA test data
+      </button>
+      <button
+        onClick={connectClarity}
+        disabled={pending || !liveBackend}
+        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Link size={16} />
+        Connect Clarity
+      </button>
+      <button
+        onClick={syncClarity}
+        disabled={pending || !liveBackend}
+        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Activity size={16} />
+        Sync Clarity
+      </button>
+      <button
+        onClick={() => run('/api/cto/run')}
+        disabled={pending || !liveBackend}
+        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Bot size={16} />
+        Run AI CTO
       </button>
       <button
         onClick={() => run('/api/report/generate')}

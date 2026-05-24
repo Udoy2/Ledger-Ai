@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
 import { fallbackReport, getGroq } from '@/lib/groq';
-import { getEmbedding } from '@/lib/embeddings';
-import { queryVector } from '@/lib/pinecone';
-import { buildRagContext, vectorNamespaceForBusiness } from '@/lib/rag';
 import { backfillSignalsToPinecone } from '@/lib/backfill';
+import { buildHybridRagContext, retrieveHybridMatches } from '@/lib/hybrid-rag';
 import type { Signal } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -18,19 +16,28 @@ export async function POST(request: Request) {
     typeof body?.prompt === 'string' && body.prompt.trim()
       ? body.prompt.trim()
       : 'Generate a comprehensive report on customer signals, risks, opportunities, and actionable next steps.';
+  const start = typeof body?.start === 'string' ? body.start : undefined;
+  const end = typeof body?.end === 'string' ? body.end : undefined;
 
-  const queryEmbedding = await getEmbedding(reportPrompt);
-  let matches = await queryVector(queryEmbedding, 24, true, {
-    namespace: vectorNamespaceForBusiness(business.id),
+  let hybrid = await retrieveHybridMatches({
+    supabase,
+    businessId: business.id,
+    prompt: reportPrompt,
+    topK: 24,
+    start,
+    end,
   });
 
-  if (!matches.length) {
-    const existingSignals = await supabase
+  if (!hybrid.matches.length) {
+    let existingQuery = supabase
       .from('signals')
       .select('*')
       .eq('business_id', business.id)
       .order('collected_at', { ascending: false })
       .limit(300);
+    if (start) existingQuery = existingQuery.gte('collected_at', start);
+    if (end) existingQuery = existingQuery.lte('collected_at', end);
+    const existingSignals = await existingQuery;
 
     if (existingSignals.error) {
       return NextResponse.json({ error: existingSignals.error.message }, { status: 500 });
@@ -40,11 +47,16 @@ export async function POST(request: Request) {
     }
 
     await backfillSignalsToPinecone(business.id, existingSignals.data as Signal[]);
-    matches = await queryVector(queryEmbedding, 24, true, {
-      namespace: vectorNamespaceForBusiness(business.id),
+    hybrid = await retrieveHybridMatches({
+      supabase,
+      businessId: business.id,
+      prompt: reportPrompt,
+      topK: 24,
+      start,
+      end,
     });
 
-    if (!matches.length) {
+    if (!hybrid.matches.length) {
       const content = fallbackReport(business, existingSignals.data as Signal[]);
       const { data: report, error: insertError } = await supabase
         .from('reports')
@@ -63,7 +75,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const context = buildRagContext(matches as Array<{ id?: string; metadata?: Record<string, unknown> }>);
+  const context = buildHybridRagContext(hybrid.matches);
   const groq = getGroq();
   if (!groq) {
     return NextResponse.json({ error: 'Groq not configured' }, { status: 500 });
@@ -93,7 +105,7 @@ export async function POST(request: Request) {
     .insert({
       business_id: business.id,
       content,
-      signal_count: matches.length,
+      signal_count: hybrid.matches.length,
     })
     .select('*')
     .single();
@@ -105,7 +117,8 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     report,
-    mode: 'rag',
-    retrieved_count: matches.length,
+    mode: 'hybrid_rag',
+    retrieved_count: hybrid.matches.length,
+    query_variants: hybrid.query_variants,
   });
 }

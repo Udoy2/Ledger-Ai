@@ -73,6 +73,11 @@ npm run dev
 - `GET /api/cron/collect/shopify`: cron placeholder for store polling
 - `GET /api/cron/collect/reviews`: cron placeholder for review polling
 - `GET or POST /api/cron/collect/ga4`: appends test GA-style daily signals for all businesses and indexes to Pinecone
+- `GET or POST /api/cron/collect/clarity`: appends Clarity-style UX friction signals (rage clicks, dead clicks, scroll depth, engagement)
+- `POST /api/cto/run`: runs lightweight multi-agent orchestration, stores run trace, recommendations, memory, and graph relationships
+- `POST /api/integrations/faq-widget/connect`: generates reusable website widget embed key and script
+- `GET /api/embed/widget.js?key=...`: embeddable JS that mounts the customer-facing FAQ iframe
+- `POST /api/embed/faq/chat`: public FAQ endpoint, hybrid retrieval answer, and automatic signal ingestion for hive mind learning
 
 ## Next Integration Work
 

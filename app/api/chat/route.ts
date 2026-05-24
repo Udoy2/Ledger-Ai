@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
-import { getEmbedding } from '@/lib/embeddings';
 import { getGroq } from '@/lib/groq';
-import { queryVector } from '@/lib/pinecone';
-import { buildRagContext, vectorNamespaceForBusiness } from '@/lib/rag';
+import { buildHybridRagContext, retrieveHybridMatches } from '@/lib/hybrid-rag';
 
 export async function POST(request: Request) {
-  const { business } = await getAuthedBusiness();
+  const { supabase, business } = await getAuthedBusiness();
   if (!business) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -23,19 +21,15 @@ export async function POST(request: Request) {
     topK?: number;
   };
 
-  const queryEmbedding = await getEmbedding(prompt);
-  const matches = await queryVector(queryEmbedding, topK, true, {
-    namespace: vectorNamespaceForBusiness(business.id),
+  const hybrid = await retrieveHybridMatches({
+    supabase,
+    businessId: business.id,
+    prompt,
+    topK,
+    start,
+    end,
   });
-
-  const filtered = matches.filter((m: any) => {
-    const meta = m.metadata as Record<string, any>;
-    if (start && new Date(meta.created_at) < new Date(start)) return false;
-    if (end && new Date(meta.created_at) > new Date(end)) return false;
-    return true;
-  });
-
-  const context = buildRagContext(filtered as Array<{ id?: string; metadata?: Record<string, unknown> }>);
+  const context = buildHybridRagContext(hybrid.matches);
   const groq = getGroq();
   if (!groq) {
     return NextResponse.json({ error: 'Groq not configured' }, { status: 500 });
@@ -58,7 +52,8 @@ export async function POST(request: Request) {
   const answer = completion.choices[0]?.message?.content ?? 'I could not generate a response.';
   return NextResponse.json({
     answer,
-    sources: filtered.map((m: any) => m.id),
-    retrieved_count: filtered.length,
+    sources: hybrid.matches.map((m) => m.id),
+    retrieved_count: hybrid.matches.length,
+    query_variants: hybrid.query_variants,
   });
 }
