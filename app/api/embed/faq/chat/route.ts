@@ -6,6 +6,17 @@ import { getGroq } from '@/lib/groq';
 import { indexSignalInPinecone } from '@/lib/index-signal';
 import type { SignalTag } from '@/lib/types';
 
+type CachedBusiness = {
+  id: string;
+  name: string;
+  brand_voice: string | null;
+  google_token: Record<string, unknown> | null;
+  expiresAt: number;
+};
+
+const businessCache = new Map<string, CachedBusiness>();
+const CACHE_TTL_MS = 1000 * 60 * 5;
+
 function extractTopics(question: string) {
   return question
     .toLowerCase()
@@ -43,15 +54,27 @@ export async function POST(request: Request) {
   if (!key || !message) return NextResponse.json({ error: 'key and message are required' }, { status: 400 });
 
   const supabase = createAdminClient();
-  const { data: business, error } = await supabase
-    .from('businesses')
-    .select('id,name,brand_voice,google_token')
-    .contains('google_token', { faq_embed_key: key })
-    .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!business) return NextResponse.json({ error: 'Invalid embed key' }, { status: 401 });
+  const now = Date.now();
+  let business = businessCache.get(key);
+  if (!business || business.expiresAt < now) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('id,name,brand_voice,google_token')
+      .contains('google_token', { faq_embed_key: key })
+      .maybeSingle();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!data) return NextResponse.json({ error: 'Invalid embed key' }, { status: 401 });
+    business = {
+      id: data.id,
+      name: data.name,
+      brand_voice: data.brand_voice,
+      google_token: (data.google_token ?? null) as Record<string, unknown> | null,
+      expiresAt: now + CACHE_TTL_MS,
+    };
+    businessCache.set(key, business);
+  }
 
-  const cfg = getFaqConfig((business as any).google_token);
+  const cfg = getFaqConfig(business.google_token);
   const origin = request.headers.get('origin');
   if (!originAllowed(origin, cfg.allowedOrigins)) {
     return NextResponse.json({ error: 'Origin not allowed for this embed key' }, { status: 403 });

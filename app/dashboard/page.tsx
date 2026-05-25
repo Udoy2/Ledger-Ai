@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-import { AlertTriangle, BarChart3, BookText, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ArrowUpRight, BarChart3, BookText, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
 import { logoutAction } from '@/app/auth/actions';
 import { DashboardActions } from '@/components/DashboardClient';
 import { getAuthedBusiness } from '@/lib/auth';
@@ -51,9 +52,9 @@ function pct(part: number, total: number) {
 
 function Stat({ label, value, detail }: { label: string; value: string | number; detail: string }) {
   return (
-    <div className="border border-line bg-white p-4">
-      <p className="text-sm font-bold text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-black text-ink">{value}</p>
+    <div className="surface p-4">
+      <p className="mono-label text-[11px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
       <p className="mt-1 text-xs text-slate-500">{detail}</p>
     </div>
   );
@@ -61,12 +62,12 @@ function Stat({ label, value, detail }: { label: string; value: string | number;
 
 function IntegrationCard({ name, status, detail }: { name: string; status: 'ready' | 'soon'; detail: string }) {
   return (
-    <div className="flex items-start justify-between gap-3 border border-line bg-white p-4">
+    <div className="surface flex items-start justify-between gap-3 p-4">
       <div>
-        <h3 className="font-black text-ink">{name}</h3>
+        <h3 className="font-bold text-slate-900">{name}</h3>
         <p className="mt-1 text-sm leading-5 text-slate-500">{detail}</p>
       </div>
-      <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-black ${status === 'ready' ? 'bg-emerald-50 text-loop' : 'bg-slate-100 text-slate-500'}`}>
+      <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${status === 'ready' ? 'bg-emerald-50 text-teal-700' : 'bg-slate-100 text-slate-500'}`}>
         {status === 'ready' ? 'MVP' : 'Next'}
       </span>
     </div>
@@ -172,35 +173,47 @@ export default async function DashboardPage() {
   const positive = signalList.filter((signal) => signal.sentiment === 'positive').length;
   const urgent = signalList.filter((signal) => signal.urgency === 'high').length;
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b border-line bg-white">
+    <main className="min-h-screen">
+      <header className="border-b border-[var(--line)] bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-md bg-loop text-white">
+            <div className="grid h-10 w-10 place-items-center rounded-md bg-teal-700 text-white">
               <BarChart3 size={22} />
             </div>
             <div>
-              <p className="text-sm font-bold text-loop">KnowledgeLoop</p>
-              <h1 className="text-xl font-black text-ink">{business.name}</h1>
+              <p className="mono-label text-[11px] uppercase tracking-[0.14em] text-teal-700">PulseDesk</p>
+              <h1 className="text-xl font-bold text-slate-900">{business.name}</h1>
             </div>
           </div>
-          <form action={logoutAction}>
-            <button disabled={!liveBackend} className="inline-flex items-center gap-2 rounded-md border border-line px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-              <LogOut size={16} />
-              {liveBackend ? 'Logout' : 'Demo mode'}
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/judge/prd"
+              className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Judge PRD
+              <ArrowUpRight size={15} />
+            </Link>
+            <form action={logoutAction}>
+              <button disabled={!liveBackend} className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
+                <LogOut size={16} />
+                {liveBackend ? 'Logout' : 'Demo mode'}
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
       <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_360px]">
         <section className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-loop">Owner command center</p>
-              <h2 className="mt-1 text-3xl font-black text-ink">Personalized Business Analyst</h2>
+          <div className="surface bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="mono-label text-xs uppercase tracking-[0.14em] text-teal-700">Business Intelligence Workspace</p>
+                <h2 className="mt-1 text-3xl font-semibold text-slate-900">Personalized Business Analyst</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-500">Unified analytics, reviews, and FAQ conversations transformed into evidence-backed recommendations.</p>
+              </div>
+              <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
             </div>
-            <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -210,23 +223,26 @@ export default async function DashboardPage() {
             <Stat label="Reports" value={report ? '1+' : 0} detail={report ? 'Latest report ready' : 'Generate first report'} />
           </div>
 
-          <div className="border border-line bg-white p-5 shadow-soft">
+          <div className="surface p-5">
+            <div>
+              <p className="mono-label text-[11px] uppercase tracking-[0.12em] text-slate-500">Latest Executive Output</p>
+            </div>
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black text-ink">AI Report</h2>
+                <h2 className="text-xl font-semibold text-slate-900">AI Report</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {report ? `Generated ${new Date(report.generated_at).toLocaleString()}` : 'Load demo data, then generate your first report.'}
                 </p>
               </div>
-              <Clock3 className="text-loop" size={22} />
+              <Clock3 className="text-teal-700" size={22} />
             </div>
             {report ? (
               <div className="prose-report max-w-none">
                 <ReactMarkdown>{report.content}</ReactMarkdown>
               </div>
             ) : (
-              <div className="border border-dashed border-line bg-slate-50 p-6 text-center">
-                <p className="font-bold text-ink">No report yet</p>
+              <div className="rounded-md border border-dashed border-[var(--line)] bg-slate-50 p-6 text-center">
+                <p className="font-semibold text-slate-900">No report yet</p>
                 <p className="mt-2 text-sm text-slate-500">Use the buttons above to load demo signals and generate an AI analysis.</p>
               </div>
             )}
@@ -234,26 +250,26 @@ export default async function DashboardPage() {
           <RagChat />
           <FaqSetupPanel docsCount={faqDocsCount} />
 
-          <div className="border border-line bg-white p-5">
-            <h2 className="text-xl font-black text-ink">Recommendations</h2>
+          <div className="surface p-5">
+            <h2 className="text-xl font-semibold text-slate-900">Recommendations</h2>
             <p className="mt-1 text-sm text-slate-500">Evidence-linked actions generated by the AI CTO run.</p>
             <div className="mt-4 space-y-3">
               {recommendations.length === 0 ? (
                 <p className="text-sm text-slate-500">Run AI CTO to generate recommendations with evidence IDs.</p>
               ) : (
                 recommendations.map((rec) => (
-                  <article key={rec.id} className="border border-line bg-slate-50 p-4">
+                  <article key={rec.id} className="rounded-md border border-[var(--line)] bg-slate-50 p-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-black text-ink">{rec.title}</p>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">impact: {rec.impact}</span>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">effort: {rec.effort}</span>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">confidence: {Math.round(Number(rec.confidence) * 100)}%</span>
+                      <p className="font-semibold text-slate-900">{rec.title}</p>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">impact: {rec.impact}</span>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">effort: {rec.effort}</span>
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">confidence: {Math.round(Number(rec.confidence) * 100)}%</span>
                     </div>
                     <p className="mt-2 text-sm text-slate-700">{rec.rationale}</p>
                     <p className="mt-2 text-xs text-slate-500">Metric: {rec.metric_to_watch || 'n/a'}</p>
                     <p className="mt-1 text-xs text-slate-500">Next step: {rec.next_step || 'n/a'}</p>
                     <details className="mt-2">
-                      <summary className="cursor-pointer text-xs font-bold text-loop">Evidence drawer</summary>
+                      <summary className="cursor-pointer text-xs font-semibold text-teal-700">Evidence drawer</summary>
                       <p className="mt-1 text-xs text-slate-500">{rec.evidence_note || 'No extra note'}</p>
                       <p className="mt-1 break-all text-xs text-slate-500">IDs: {rec.evidence_signal_ids.join(', ') || 'n/a'}</p>
                     </details>
@@ -263,8 +279,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="border border-line bg-white p-5">
-            <h2 className="text-xl font-black text-ink">Signal Feed</h2>
+          <div className="surface p-5">
+            <h2 className="text-xl font-semibold text-slate-900">Signal Feed</h2>
             <div className="mt-4 space-y-3">
               {signalList.length === 0 ? (
                 <p className="text-sm text-slate-500">No signals yet. The MVP can load demo data immediately, then real collectors can feed this same table.</p>
@@ -272,14 +288,14 @@ export default async function DashboardPage() {
                 signalList.map((signal) => {
                   const Icon = sourceIcons[signal.source] ?? PlugZap;
                   return (
-                    <article key={signal.id} className="border border-line bg-slate-50 p-4">
+                    <article key={signal.id} className="rounded-md border border-[var(--line)] bg-slate-50 p-4">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-black text-slate-700">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-700">
                           <Icon size={14} />
                           {sourceLabels[signal.source] ?? signal.source}
                         </span>
-                        <span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-600">{signal.sentiment}</span>
-                        <span className={`rounded-md px-2 py-1 text-xs font-black ${signal.urgency === 'high' ? 'bg-red-50 text-red-700' : signal.urgency === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-loop'}`}>
+                        <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">{signal.sentiment}</span>
+                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${signal.urgency === 'high' ? 'bg-red-50 text-red-700' : signal.urgency === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-teal-700'}`}>
                           {signal.urgency}
                         </span>
                       </div>
@@ -300,8 +316,8 @@ export default async function DashboardPage() {
         </section>
 
         <aside className="space-y-6">
-          <div className="border border-line bg-white p-5">
-            <h2 className="text-xl font-black text-ink">Data Health</h2>
+          <div className="surface p-5">
+            <h2 className="text-xl font-semibold text-slate-900">Data Health</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">Connector freshness and source coverage for your AI analyst.</p>
             <div className="mt-4 space-y-3">
               <IntegrationCard name="Demo Data" status="ready" detail="One-click seed for validating the core loop." />
@@ -312,7 +328,7 @@ export default async function DashboardPage() {
                 href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api"
                 target="_blank"
                 rel="noreferrer"
-                className="block border border-line bg-slate-50 px-4 py-3 text-sm font-bold text-loop"
+                className="block rounded-md border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm font-semibold text-teal-700"
               >
                 Open Microsoft Clarity API docs
               </a>
@@ -323,10 +339,10 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="border border-line bg-ink p-5 text-white">
+          <div className="surface bg-slate-900 p-5 text-white">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="text-emerald-300" size={20} />
-              <h2 className="font-black">Agent trace + memory</h2>
+              <CheckCircle2 className="text-teal-300" size={20} />
+              <h2 className="font-semibold">Agent trace + memory</h2>
             </div>
             <div className="mt-4 space-y-3">
               {!latestRun ? (

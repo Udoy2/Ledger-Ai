@@ -62,7 +62,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={() => run('/api/seed')}
         disabled={pending || hasSignals || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <DatabaseZap size={16} />
         {hasSignals ? 'Demo loaded' : 'Load demo data'}
@@ -70,7 +70,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={() => run('/api/integrations/ga4/connect', { ga4_property_id: 'test-property' })}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Link size={16} />
         Connect GA (test)
@@ -78,7 +78,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={() => run('/api/cron/collect/ga4')}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Activity size={16} />
         Sync GA test data
@@ -86,7 +86,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={connectClarity}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Link size={16} />
         Connect Clarity
@@ -94,7 +94,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={syncClarity}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Activity size={16} />
         Sync Clarity
@@ -102,7 +102,7 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={() => run('/api/cto/run')}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-line bg-white px-3 py-2 text-sm font-bold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Bot size={16} />
         Run AI CTO
@@ -110,12 +110,12 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
       <button
         onClick={() => run('/api/report/generate')}
         disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md bg-loop px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-70"
+        className="inline-flex items-center gap-2 rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
       >
         {pending ? <RefreshCw size={16} className="animate-spin" /> : <FileText size={16} />}
         Generate report
       </button>
-      {error ? <p className="w-full text-xs font-bold text-red-600">{error}</p> : null}
+      {error ? <p className="w-full text-xs font-semibold text-red-600">{error}</p> : null}
     </div>
   );
 }

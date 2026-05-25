@@ -47,23 +47,26 @@ export async function ingestFaqDocs(params: {
   businessId: string;
   docs: FaqDocInput[];
 }) {
-  let inserted = 0;
   let chunks = 0;
-  const signalIds: string[] = [];
+  if (!params.docs.length) return { inserted: 0, chunks: 0, signal_ids: [] };
 
-  for (const doc of params.docs) {
+  const now = new Date().toISOString();
+  const prepared = params.docs.map((doc) => {
     const tag = docTag(doc.title);
     const rawText = `Document title: ${doc.title}\n\n${doc.content}`;
     const metadata = {
       faq_doc: true,
       doc_title: doc.title,
       doc_url: doc.url || null,
-      uploaded_at: new Date().toISOString(),
+      uploaded_at: now,
     };
+    return { doc, tag, rawText, metadata };
+  });
 
-    const { data, error } = await params.supabase
-      .from('signals')
-      .insert({
+  const { data: insertedRows, error } = await params.supabase
+    .from('signals')
+    .insert(
+      prepared.map(({ rawText, tag, metadata }) => ({
         business_id: params.businessId,
         source: 'website_faq_docs',
         type: 'faq_knowledge_doc',
@@ -72,25 +75,45 @@ export async function ingestFaqDocs(params: {
         topics: tag.topics,
         urgency: tag.urgency,
         metadata,
-      })
-      .select('id')
-      .single();
-    if (error) continue;
+      })),
+    )
+    .select('id,raw_text,sentiment,topics,urgency,metadata,collected_at');
+  if (error) return { inserted: 0, chunks: 0, signal_ids: [] };
 
-    inserted += 1;
-    signalIds.push(data.id);
-    chunks += await indexSignalInPinecone({
-      businessId: params.businessId,
-      source: 'website_faq_docs',
-      type: 'faq_knowledge_doc',
-      rawText,
-      tag,
-      metadata: {
-        ...metadata,
-        signal_id: data.id,
-      },
-    });
+  const rows = (insertedRows ?? []) as Array<{
+    id: string;
+    raw_text: string;
+    sentiment: SignalTag['sentiment'];
+    topics: string[];
+    urgency: SignalTag['urgency'];
+    metadata: Record<string, unknown>;
+    collected_at: string;
+  }>;
+
+  for (let i = 0; i < rows.length; i += 4) {
+    const slice = rows.slice(i, i + 4);
+    const results = await Promise.all(
+      slice.map((row) =>
+        indexSignalInPinecone({
+          businessId: params.businessId,
+          source: 'website_faq_docs',
+          type: 'faq_knowledge_doc',
+          rawText: row.raw_text,
+          tag: {
+            sentiment: row.sentiment,
+            topics: row.topics,
+            urgency: row.urgency,
+          },
+          metadata: {
+            ...(row.metadata ?? {}),
+            signal_id: row.id,
+          },
+          createdAt: row.collected_at,
+        }),
+      ),
+    );
+    chunks += results.reduce((sum, n) => sum + n, 0);
   }
 
-  return { inserted, chunks, signal_ids: signalIds };
+  return { inserted: rows.length, chunks, signal_ids: rows.map((row) => row.id) };
 }

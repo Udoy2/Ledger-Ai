@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const toolTrace: Array<Record<string, unknown>> = [];
     const { data: signalList, error: signalError } = await supabase
       .from('signals')
       .select('*')
@@ -68,21 +69,17 @@ export async function POST(request: Request) {
     const signals = (signalList ?? []) as Signal[];
 
     const summary = summarizeSignals(signals);
-    if (persistentMode && aiRun) {
-      await supabase.from('tool_calls').insert({
-        ai_run_id: aiRun.id,
-        business_id: business.id,
-        step: 'data_quality',
-        tool_name: 'DataQualityAgent',
-        status: 'success',
-        input: { minimum_signals: 5 },
-        output: {
-          stale: summary.total < 5,
-          total_signals: summary.total,
-          source_coverage: Object.keys(summary.bySource),
-        },
-      });
-    }
+    toolTrace.push({
+      step: 'data_quality',
+      tool_name: 'DataQualityAgent',
+      status: 'success',
+      input: { minimum_signals: 5 },
+      output: {
+        stale: summary.total < 5,
+        total_signals: summary.total,
+        source_coverage: Object.keys(summary.bySource),
+      },
+    });
 
     const hybrid = await retrieveHybridMatches({
       supabase,
@@ -91,17 +88,13 @@ export async function POST(request: Request) {
       topK: 16,
     });
     const context = buildHybridRagContext(hybrid.matches);
-    if (persistentMode && aiRun) {
-      await supabase.from('tool_calls').insert({
-        ai_run_id: aiRun.id,
-        business_id: business.id,
-        step: 'metric_analyst',
-        tool_name: 'MetricAnalystAgent',
-        status: 'success',
-        input: { prompt, topK: 16 },
-        output: { retrieved_count: hybrid.matches.length, urgent_signals: summary.urgent, negative_signals: summary.negative },
-      });
-    }
+    toolTrace.push({
+      step: 'metric_analyst',
+      tool_name: 'MetricAnalystAgent',
+      status: 'success',
+      input: { prompt, topK: 16 },
+      output: { retrieved_count: hybrid.matches.length, urgent_signals: summary.urgent, negative_signals: summary.negative },
+    });
 
     const groq = getGroq();
     let recommendations: Array<Record<string, unknown>> = [];
@@ -197,8 +190,8 @@ export async function POST(request: Request) {
         source: 'MemoryAgent',
       },
     ];
-    for (const row of memoryRows) {
-      if (persistentMode) await supabase.from('memories').upsert(row, { onConflict: 'business_id,key' });
+    if (persistentMode) {
+      await Promise.all(memoryRows.map((row) => supabase.from('memories').upsert(row, { onConflict: 'business_id,key' })));
     }
 
     const entityRows = [
@@ -207,10 +200,16 @@ export async function POST(request: Request) {
       { business_id: business.id, kind: 'theme', name: 'delivery_clarity', metadata: { source: 'agent' } },
     ];
     const entityMap = new Map<string, string>();
-    for (const entity of entityRows) {
-      if (!persistentMode) continue;
-      const { data } = await supabase.from('entities').upsert(entity, { onConflict: 'business_id,kind,name' }).select('id, name').single();
-      if (data) entityMap.set(data.name, data.id);
+    if (persistentMode) {
+      const settled = await Promise.all(
+        entityRows.map((entity) =>
+          supabase.from('entities').upsert(entity, { onConflict: 'business_id,kind,name' }).select('id, name').single(),
+        ),
+      );
+      for (const res of settled) {
+        const data = (res as any)?.data;
+        if (data?.name && data?.id) entityMap.set(data.name, data.id);
+      }
     }
     if (entityMap.has('delivery_clarity') && entityMap.has('checkout')) {
       if (persistentMode && aiRun) await supabase.from('relationships').insert({
@@ -223,10 +222,8 @@ export async function POST(request: Request) {
       });
     }
 
-    if (persistentMode && aiRun) await supabase.from('tool_calls').insert([
+    toolTrace.push(
       {
-        ai_run_id: aiRun.id,
-        business_id: business.id,
         step: 'strategy',
         tool_name: 'StrategyAgent',
         status: 'success',
@@ -234,8 +231,6 @@ export async function POST(request: Request) {
         output: { recommendations_created: savedRecs?.length ?? 0 },
       },
       {
-        ai_run_id: aiRun.id,
-        business_id: business.id,
         step: 'critic',
         tool_name: 'CriticAgentDeterministic',
         status: 'success',
@@ -243,15 +238,23 @@ export async function POST(request: Request) {
         output: { passed_recommendations: recommendations.length },
       },
       {
-        ai_run_id: aiRun.id,
-        business_id: business.id,
         step: 'memory',
         tool_name: 'MemoryAgent',
         status: 'success',
         input: { memories_written: memoryRows.length },
         output: { graph_entities_upserted: entityMap.size },
       },
-    ]);
+    );
+
+    if (persistentMode && aiRun) {
+      await supabase.from('tool_calls').insert(
+        toolTrace.map((row) => ({
+          ai_run_id: aiRun.id,
+          business_id: business.id,
+          ...row,
+        })),
+      );
+    }
 
     if (persistentMode && aiRun) await supabase
       .from('ai_runs')
