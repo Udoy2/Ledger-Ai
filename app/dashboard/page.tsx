@@ -2,32 +2,57 @@ import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
-import { AlertTriangle, ArrowUpRight, BarChart3, BookText, CheckCircle2, Clock3, LogOut, PlugZap, Radio, ShoppingCart, Star, TrendingUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  BookText,
+  CheckCircle2,
+  Clock3,
+  LogOut,
+  PlugZap,
+  Radio,
+  ShoppingCart,
+  Star,
+  TrendingUp,
+  Activity,
+  Cpu,
+  BrainCircuit,
+  Settings,
+  Layers,
+  Zap,
+  Grid,
+  HelpCircle,
+  FileText,
+  Search,
+  User,
+  Sliders,
+} from 'lucide-react';
 import { logoutAction } from '@/app/auth/actions';
 import { DashboardActions } from '@/components/DashboardClient';
 import { getAuthedBusiness } from '@/lib/auth';
 import { demoSignals } from '@/lib/demo';
 import { hasSupabaseEnv } from '@/lib/env';
 import { fallbackReport } from '@/lib/groq';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { AiRun, Memory, Recommendation, Report, Signal, ToolCall } from '@/lib/types';
 
 const RagChat = dynamic(() => import('@/components/RagChat').then((m) => m.RagChat), {
   ssr: false,
-  loading: () => <div className="border border-line bg-white p-5 text-sm text-slate-500">Loading chat...</div>,
+  loading: () => <div className="surface-inset p-5 text-xs text-ink-soft">Loading AI agent chat...</div>,
 });
 
 const FaqSetupPanel = dynamic(() => import('@/components/FaqSetupPanel').then((m) => m.FaqSetupPanel), {
   ssr: false,
-  loading: () => <div className="border border-line bg-white p-5 text-sm text-slate-500">Loading FAQ setup...</div>,
+  loading: () => <div className="surface-inset p-5 text-xs text-ink-soft">Loading FAQ configuration...</div>,
 });
 
 const sourceLabels: Record<string, string> = {
   google_review: 'Google Review',
-  facebook_comment: 'Facebook',
-  instagram_comment: 'Instagram',
-  shopify: 'Shopify',
+  facebook_comment: 'Facebook Feedback',
+  instagram_comment: 'Instagram Feedback',
+  shopify: 'Shopify Store',
   support_chat: 'Support Chat',
-  google_analytics: 'GA4',
+  google_analytics: 'Google Analytics 4',
   microsoft_clarity: 'Microsoft Clarity',
   website_faq_agent: 'Website FAQ Agent',
   website_faq_docs: 'FAQ Knowledge Doc',
@@ -50,25 +75,39 @@ function pct(part: number, total: number) {
   return Math.round((part / total) * 100);
 }
 
-function Stat({ label, value, detail }: { label: string; value: string | number; detail: string }) {
+function Stat({ label, value, detail, icon: Icon }: { label: string; value: string | number; detail: string; icon?: any }) {
   return (
-    <div className="surface p-4">
-      <p className="mono-label text-[11px] uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{detail}</p>
+    <div className="glass-stat stat-card p-5 flex flex-col justify-between" style={{ minHeight: '120px' }}>
+      <div className="flex justify-between items-start">
+        <p className="mono-label text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
+        <div className="p-1.5 rounded-lg shrink-0" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)' }}>
+          {Icon && <Icon size={14} />}
+        </div>
+      </div>
+      <div className="mt-2">
+        <p className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>{value}</p>
+        <p className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--text-secondary)' }}>{detail}</p>
+      </div>
     </div>
   );
 }
 
-function IntegrationCard({ name, status, detail }: { name: string; status: 'ready' | 'soon'; detail: string }) {
+function IntegrationCard({ name, status, detail, icon: Icon }: { name: string; status: 'ready' | 'soon'; detail: string; icon?: any }) {
   return (
-    <div className="surface flex items-start justify-between gap-3 p-4">
-      <div>
-        <h3 className="font-bold text-slate-900">{name}</h3>
-        <p className="mt-1 text-sm leading-5 text-slate-500">{detail}</p>
+    <div className="glass flex items-start justify-between gap-3 p-3.5 rounded-xl">
+      <div className="flex gap-3">
+        {Icon && (
+          <div className="mt-0.5 p-2 rounded-lg border shrink-0" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-tertiary)' }}>
+            <Icon size={13} />
+          </div>
+        )}
+        <div>
+          <h3 className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{name}</h3>
+          <p className="mt-1 text-[10px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{detail}</p>
+        </div>
       </div>
-      <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-bold ${status === 'ready' ? 'bg-emerald-50 text-teal-700' : 'bg-slate-100 text-slate-500'}`}>
-        {status === 'ready' ? 'MVP' : 'Next'}
+      <span className={`shrink-0 rounded px-2 py-0.5 text-[8px] font-bold tracking-wider uppercase ${status === 'ready' ? 'badge-positive' : 'badge-neutral'}`}>
+        {status === 'ready' ? 'Active' : 'Soon'}
       </span>
     </div>
   );
@@ -170,213 +209,384 @@ export default async function DashboardPage() {
       toolCalls = (data ?? []) as ToolCall[];
     }
   }
+
   const positive = signalList.filter((signal) => signal.sentiment === 'positive').length;
   const urgent = signalList.filter((signal) => signal.urgency === 'high').length;
+
   return (
-    <main className="min-h-screen">
-      <header className="border-b border-[var(--line)] bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-10 w-10 place-items-center rounded-md bg-teal-700 text-white">
-              <BarChart3 size={22} />
+    <div className="min-h-screen flex relative" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+      
+      {/* 1. Left Sidebar Navigation */}
+      <aside className="glass-sidebar w-64 flex flex-col justify-between shrink-0 sticky top-0 h-screen z-40 p-6">
+        <div className="space-y-8">
+          
+          {/* Sidebar Logo */}
+          <Link href="/" className="inline-flex items-center gap-2.5 font-extrabold text-md no-underline hover:opacity-90 transition-opacity" style={{ color: 'var(--text-primary)' }}>
+            <div className="p-1.5 rounded-lg shrink-0" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
+              <BarChart3 size={16} />
             </div>
-            <div>
-              <p className="mono-label text-[11px] uppercase tracking-[0.14em] text-teal-700">PulseDesk</p>
-              <h1 className="text-xl font-bold text-slate-900">{business.name}</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/judge/prd"
-              className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Judge PRD
-              <ArrowUpRight size={15} />
+            <span className="tracking-tight font-extrabold">LedgerAI</span>
+          </Link>
+
+          {/* Nav Items */}
+          <nav className="space-y-1">
+            <p className="mono-label text-[9px] font-bold uppercase tracking-[0.18em] px-3 mb-3" style={{ color: 'var(--text-tertiary)' }}>Workspace Menu</p>
+            
+            <a href="#stats" className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs no-underline transition-all"
+               style={{ background: 'var(--accent-subtle)', color: 'var(--accent-text)', border: '1px solid rgba(16,185,129,0.15)' }}>
+              <Grid size={14} />
+              <span>Workspace Overview</span>
+            </a>
+            
+            <a href="#report" className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-medium text-xs no-underline transition-all hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+               style={{ color: 'var(--text-secondary)' }}>
+              <FileText size={14} />
+              <span>Insight Reports</span>
+            </a>
+            
+            <a href="#actions" className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-medium text-xs no-underline transition-all hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+               style={{ color: 'var(--text-secondary)' }}>
+              <Sliders size={14} />
+              <span>Prescriptive Actions</span>
+            </a>
+
+            <a href="#signals" className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-medium text-xs no-underline transition-all hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+               style={{ color: 'var(--text-secondary)' }}>
+              <Layers size={14} />
+              <span>Telemetry Signals</span>
+            </a>
+            
+            <Link href="/judge/prd" className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-medium text-xs no-underline transition-all hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
+               style={{ color: 'var(--text-secondary)' }}>
+              <HelpCircle size={14} />
+              <span>System PRD Summary</span>
             </Link>
-            <form action={logoutAction}>
-              <button disabled={!liveBackend} className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-                <LogOut size={16} />
-                {liveBackend ? 'Logout' : 'Demo mode'}
-              </button>
-            </form>
-          </div>
+          </nav>
         </div>
-      </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-6 lg:grid-cols-[1fr_360px]">
-        <section className="space-y-6">
-          <div className="surface bg-white p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="mono-label text-xs uppercase tracking-[0.14em] text-teal-700">Business Intelligence Workspace</p>
-                <h2 className="mt-1 text-3xl font-semibold text-slate-900">Personalized Business Analyst</h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-500">Unified analytics, reviews, and FAQ conversations transformed into evidence-backed recommendations.</p>
-              </div>
-              <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
+        {/* Sidebar Footer */}
+        <div className="pt-6 space-y-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                 style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
+              <User size={13} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>{business.name}</p>
+              <p className="text-[8px] font-bold uppercase tracking-wider mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{business.industry}</p>
             </div>
           </div>
+          
+          <form action={logoutAction} className="w-full">
+            <button
+              disabled={!liveBackend}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-red-500 bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <LogOut size={13} />
+              <span>{liveBackend ? 'Sign Out' : 'Demo Mode'}</span>
+            </button>
+          </form>
+        </div>
+      </aside>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Stat label="Signals" value={signalList.length} detail="Latest customer and behavior records" />
-            <Stat label="Positive %" value={`${pct(positive, signalList.length)}%`} detail="Current visible sentiment" />
-            <Stat label="Urgent issues" value={urgent} detail="High-priority operational risks" />
-            <Stat label="Reports" value={report ? '1+' : 0} detail={report ? 'Latest report ready' : 'Generate first report'} />
+      {/* 2. Main content area on the right */}
+      <div className="flex-1 flex flex-col min-w-0 relative">
+        
+        {/* Sticky Header with Search and Actions */}
+        <header className="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between gap-4">
+          
+          {/* Left search bar */}
+          <div className="relative w-72 max-w-full">
+            <Search className="absolute left-3 top-2.5" size={13} style={{ color: 'var(--text-tertiary)' }} />
+            <input
+              type="text"
+              placeholder="Search insights, metrics, telemetry..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs"
+            />
           </div>
 
-          <div className="surface p-5">
-            <div>
-              <p className="mono-label text-[11px] uppercase tracking-[0.12em] text-slate-500">Latest Executive Output</p>
-            </div>
-            <div className="mb-4 flex items-start justify-between gap-4">
+          {/* Right Header Actions */}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div style={{ width: '1px', height: '20px', background: 'var(--border)' }} />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider badge-positive shrink-0 shadow-sm">
+              <span className="pulse-dot" />
+              Live Feed
+            </span>
+          </div>
+        </header>
+
+        {/* Greeting Section */}
+        <div className="px-8 pt-8">
+          <div className="glass-card p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-accent-subtle to-transparent pointer-events-none" />
+            <div className="flex flex-col gap-5">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">AI Report</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {report ? `Generated ${new Date(report.generated_at).toLocaleString()}` : 'Load demo data, then generate your first report.'}
+                <p className="mono-label text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--accent)' }}>Active Workspace Dashboard</p>
+                <h2 className="mt-1 text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Welcome back, Owner!</h2>
+                <p className="mt-1.5 text-xs max-w-2xl leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  Here is the store intelligence overview today. Trigger automated GA4, Clarity, or seeder scripts below to keep telemetry fresh.
                 </p>
               </div>
-              <Clock3 className="text-teal-700" size={22} />
-            </div>
-            {report ? (
-              <div className="prose-report max-w-none">
-                <ReactMarkdown>{report.content}</ReactMarkdown>
+              <div className="border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+                <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
               </div>
-            ) : (
-              <div className="rounded-md border border-dashed border-[var(--line)] bg-slate-50 p-6 text-center">
-                <p className="font-semibold text-slate-900">No report yet</p>
-                <p className="mt-2 text-sm text-slate-500">Use the buttons above to load demo signals and generate an AI analysis.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Grid Sections */}
+        <div className="px-8 py-6 grid gap-6 lg:grid-cols-[1fr_360px] relative z-10">
+          
+          {/* Main Workspace Column */}
+          <section className="space-y-6">
+            
+            {/* KPI Stats widgets */}
+            <div id="stats" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 scroll-mt-24">
+              <Stat label="Ingested Signals" value={signalList.length} detail="Touchpoints monitored" icon={Layers} />
+              <Stat label="Sentiment Ratio" value={`${pct(positive, signalList.length)}%`} detail="Positive customer sentiment" icon={CheckCircle2} />
+              <Stat label="Active Risks" value={urgent} detail="High urgency operational traps" icon={AlertTriangle} />
+              <Stat label="Generated Reports" value={report ? '1+' : '0'} detail="AI summary sheets ready" icon={BookText} />
+            </div>
+
+            {/* AI Report Card */}
+            <div id="report" className="glass-card p-6 relative overflow-hidden scroll-mt-24">
+              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'var(--accent)' }} />
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="mono-label text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-tertiary)' }}>Synthesis Report</p>
+                  <h2 className="text-base font-extrabold tracking-tight mt-0.5" style={{ color: 'var(--text-primary)' }}>Autonomous Executive Analysis</h2>
+                  <p className="mt-1 text-[10px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    {report ? `Generated on ${new Date(report.generated_at).toLocaleString()}` : 'Populate workspace data to analyze.'}
+                  </p>
+                </div>
+                <div className="p-2 rounded-xl border shrink-0" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--accent)' }}>
+                  <Clock3 size={15} />
+                </div>
               </div>
-            )}
-          </div>
-          <RagChat />
-          <FaqSetupPanel docsCount={faqDocsCount} />
-
-          <div className="surface p-5">
-            <h2 className="text-xl font-semibold text-slate-900">Recommendations</h2>
-            <p className="mt-1 text-sm text-slate-500">Evidence-linked actions generated by the AI CTO run.</p>
-            <div className="mt-4 space-y-3">
-              {recommendations.length === 0 ? (
-                <p className="text-sm text-slate-500">Run AI CTO to generate recommendations with evidence IDs.</p>
+              
+              {report ? (
+                <div className="prose-report p-5 rounded-xl max-h-[480px] overflow-auto max-w-none shadow-inner border"
+                     style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                  <ReactMarkdown>{report.content}</ReactMarkdown>
+                </div>
               ) : (
-                recommendations.map((rec) => (
-                  <article key={rec.id} className="rounded-md border border-[var(--line)] bg-slate-50 p-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-slate-900">{rec.title}</p>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">impact: {rec.impact}</span>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">effort: {rec.effort}</span>
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">confidence: {Math.round(Number(rec.confidence) * 100)}%</span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">{rec.rationale}</p>
-                    <p className="mt-2 text-xs text-slate-500">Metric: {rec.metric_to_watch || 'n/a'}</p>
-                    <p className="mt-1 text-xs text-slate-500">Next step: {rec.next_step || 'n/a'}</p>
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-xs font-semibold text-teal-700">Evidence drawer</summary>
-                      <p className="mt-1 text-xs text-slate-500">{rec.evidence_note || 'No extra note'}</p>
-                      <p className="mt-1 break-all text-xs text-slate-500">IDs: {rec.evidence_signal_ids.join(', ') || 'n/a'}</p>
-                    </details>
-                  </article>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="surface p-5">
-            <h2 className="text-xl font-semibold text-slate-900">Signal Feed</h2>
-            <div className="mt-4 space-y-3">
-              {signalList.length === 0 ? (
-                <p className="text-sm text-slate-500">No signals yet. The MVP can load demo data immediately, then real collectors can feed this same table.</p>
-              ) : (
-                signalList.map((signal) => {
-                  const Icon = sourceIcons[signal.source] ?? PlugZap;
-                  return (
-                    <article key={signal.id} className="rounded-md border border-[var(--line)] bg-slate-50 p-4">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-                          <Icon size={14} />
-                          {sourceLabels[signal.source] ?? signal.source}
-                        </span>
-                        <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600">{signal.sentiment}</span>
-                        <span className={`rounded-md px-2 py-1 text-xs font-semibold ${signal.urgency === 'high' ? 'bg-red-50 text-red-700' : signal.urgency === 'medium' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-teal-700'}`}>
-                          {signal.urgency}
-                        </span>
-                      </div>
-                      <p className="text-sm leading-6 text-slate-700">{signal.raw_text}</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {signal.topics.map((topic) => (
-                          <span key={topic} className="rounded-md bg-white px-2 py-1 text-xs text-slate-500">
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </section>
-
-        <aside className="space-y-6">
-          <div className="surface p-5">
-            <h2 className="text-xl font-semibold text-slate-900">Data Health</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">Connector freshness and source coverage for your AI analyst.</p>
-            <div className="mt-4 space-y-3">
-              <IntegrationCard name="Demo Data" status="ready" detail="One-click seed for validating the core loop." />
-              <IntegrationCard name="GA4 Test Collector" status="ready" detail="Appends fresh analytics-like signals every sync run (24h schedule supported)." />
-              <IntegrationCard name="Clarity Collector" status="ready" detail="Rage clicks, dead clicks, engagement, and top URL friction summaries." />
-              <IntegrationCard name="Website FAQ Widget" status="ready" detail="Embeddable JS iframe chat that stores visitor Q/A back into the hive mind." />
-              <a
-                href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api"
-                target="_blank"
-                rel="noreferrer"
-                className="block rounded-md border border-[var(--line)] bg-slate-50 px-4 py-3 text-sm font-semibold text-teal-700"
-              >
-                Open Microsoft Clarity API docs
-              </a>
-              <IntegrationCard name="Shopify / WooCommerce" status="soon" detail="Orders, products, carts, repeat buyers." />
-              <IntegrationCard name="Google Reviews" status="soon" detail="Star ratings, praise, complaints, recurring themes." />
-              <IntegrationCard name="Facebook / Instagram" status="soon" detail="Comments, objections, engagement patterns." />
-              <IntegrationCard name="GA4" status="soon" detail="Traffic sources, pages, bounce rates, funnels." />
-            </div>
-          </div>
-
-          <div className="surface bg-slate-900 p-5 text-white">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="text-teal-300" size={20} />
-              <h2 className="font-semibold">Agent trace + memory</h2>
-            </div>
-            <div className="mt-4 space-y-3">
-              {!latestRun ? (
-                <p className="text-sm leading-6 text-slate-300">Run AI CTO to see orchestration steps and saved memory.</p>
-              ) : (
-                <div className="space-y-3">
-                  <div className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-100">
-                    Run: {latestRun.status} at {new Date(latestRun.started_at).toLocaleString()}
-                  </div>
-                  <div className="space-y-2">
-                    {toolCalls.map((tc) => (
-                      <div key={tc.id} className="border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200">
-                        {tc.step} - {tc.tool_name}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    {memories.length === 0 ? (
-                      <p className="text-xs text-slate-300">No memory yet.</p>
-                    ) : (
-                      memories.map((memory) => (
-                        <div key={memory.id} className="border border-white/10 bg-white/5 px-3 py-2">
-                          <p className="text-xs font-bold text-emerald-300">{memory.key}</p>
-                          <p className="text-xs text-slate-200">{memory.value}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
+                <div className="rounded-xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--border)', background: 'rgba(0,0,0,0.02)' }}>
+                  <p className="font-bold text-xs" style={{ color: 'var(--text-secondary)' }}>No Active Analysis Sheets</p>
+                  <p className="mt-1 text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+                    Click 'Load Demo Data' in the action board, then 'Generate Insight Report'.
+                  </p>
                 </div>
               )}
             </div>
-          </div>
-        </aside>
+
+            {/* AI Agent Chat widget and FAQ widget */}
+            <RagChat />
+            <FaqSetupPanel docsCount={faqDocsCount} />
+
+            {/* Recommendations Drawer */}
+            <div id="actions" className="glass-card p-6 scroll-mt-24">
+              <div className="flex items-center gap-2 mb-1">
+                <BrainCircuit size={15} style={{ color: 'var(--accent)' }} />
+                <h2 className="text-sm font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Prescriptive Actions</h2>
+              </div>
+              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Action recommendations automatically compiled by the orchestrator run.</p>
+              
+              <div className="mt-5 space-y-4">
+                {recommendations.length === 0 ? (
+                  <div className="rounded-xl p-5 text-center text-xs border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                    ⚡ Click "Run AI CTO" in the command center to trigger the multi-step agent loop and view recommendations.
+                  </div>
+                ) : (
+                  recommendations.map((rec) => (
+                    <article key={rec.id} className="rounded-xl p-5 border hover:border-accent transition-all" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-bold text-xs" style={{ color: 'var(--text-primary)' }}>{rec.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded px-2 py-0.5 text-[8px] font-bold uppercase border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Impact: {rec.impact}</span>
+                          <span className="rounded px-2 py-0.5 text-[8px] font-bold uppercase border" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Effort: {rec.effort}</span>
+                          <span className="rounded badge-positive px-2 py-0.5 text-[8px] font-bold">Conf: {pct(Number(rec.confidence), 1)}%</span>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{rec.rationale}</p>
+                      
+                      <div className="mt-4 pt-4 border-t grid gap-3 sm:grid-cols-2 text-[10px] font-semibold" style={{ borderColor: 'var(--border)' }}>
+                        <div>
+                          <span className="block mb-0.5" style={{ color: 'var(--text-tertiary)' }}>METRIC TARGET</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{rec.metric_to_watch || 'Unspecified'}</span>
+                        </div>
+                        <div>
+                          <span className="block mb-0.5" style={{ color: 'var(--text-tertiary)' }}>NEXT STEP</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{rec.next_step || 'Unspecified'}</span>
+                        </div>
+                      </div>
+
+                      <details className="mt-4 pt-3 border-t group" style={{ borderColor: 'var(--border)' }}>
+                        <summary className="cursor-pointer text-[10px] font-bold flex items-center gap-1 select-none" style={{ color: 'var(--accent)' }}>
+                          <span>Evidence Drawer</span>
+                          <span className="text-[8px] group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="mt-2 p-3 rounded-lg border text-xs space-y-1" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                          <p><strong style={{ color: 'var(--text-primary)' }}>Context note:</strong> {rec.evidence_note || 'Linked dataset details.'}</p>
+                          <p className="break-all font-mono text-[9px]" style={{ color: 'var(--text-tertiary)' }}><strong style={{ color: 'var(--text-primary)' }}>Evidence ids:</strong> {rec.evidence_signal_ids.join(', ') || 'n/a'}</p>
+                        </div>
+                      </details>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Live Signals Ingestion Feed */}
+            <div id="signals" className="glass-card p-6 scroll-mt-24">
+              <div className="flex items-center justify-between gap-4 mb-1">
+                <div className="flex items-center gap-2">
+                  <Layers size={15} style={{ color: 'var(--accent)' }} className="animate-pulse" />
+                  <h2 className="text-sm font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>Telemetry Signals</h2>
+                </div>
+                <span className="mono-label text-[9px] px-2.5 py-0.5 rounded-full border font-semibold" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                  Active Stream
+                </span>
+              </div>
+              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Data streams compiled from e-commerce adapters, tagged for categories and urgency on ingestion.</p>
+              
+              <div className="mt-5 space-y-3 max-h-[600px] overflow-y-auto pr-1">
+                {signalList.length === 0 ? (
+                  <div className="rounded-xl border border-dashed p-8 text-center text-xs" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                    📥 No data streams ingested yet. Load demo data or trigger sync scripts to populate.
+                  </div>
+                ) : (
+                  signalList.map((signal) => {
+                    const Icon = sourceIcons[signal.source] ?? PlugZap;
+                    const label = sourceLabels[signal.source] ?? signal.source;
+                    return (
+                      <article key={signal.id} className="signal-card glass rounded-xl p-4 hover:border-accent/40 transition-all">
+                        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[9px] font-bold" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                            <Icon size={11} className="text-accent" style={{ color: 'var(--accent)' }} />
+                            {label}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`badge ${signal.sentiment === 'positive' ? 'badge-positive' : signal.sentiment === 'negative' ? 'badge-negative' : 'badge-neutral'}`}>
+                              {signal.sentiment}
+                            </span>
+                            <span className={`badge ${signal.urgency === 'high' ? 'badge-high' : signal.urgency === 'medium' ? 'badge-medium' : 'badge-low'}`}>
+                              {signal.urgency}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{signal.raw_text}</p>
+                        {signal.topics && signal.topics.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            {signal.topics.map((topic) => (
+                              <span key={topic} className="topic-pill">
+                                {topic}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Right Sidebar Column */}
+          <aside className="space-y-6">
+            
+            {/* Connector Health */}
+            <div className="glass-card p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap size={14} style={{ color: 'var(--accent)' }} />
+                <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Connector Health</h2>
+              </div>
+              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Schema freshness and connection matrices.</p>
+              <div className="mt-4 space-y-2.5">
+                <IntegrationCard name="Demo Data Seeder" status="ready" detail="One-click mock dataset injection." icon={Layers} />
+                <IntegrationCard name="GA4 telemetry Slot" status="ready" detail="Evaluates bounce metrics, landing traffic, and funnels." icon={TrendingUp} />
+                <IntegrationCard name="Clarity Heatmaps" status="ready" detail="Monitors user click friction, scroll layers, and scroll time." icon={TrendingUp} />
+                <IntegrationCard name="FAQ Iframe chatbot" status="ready" detail="Self-contained chat frame with automatic memory extraction." icon={PlugZap} />
+                <a
+                  href="https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-data-export-api"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block text-center rounded-lg border px-4 py-2 text-xs font-bold no-underline transition-all hover:bg-[var(--bg-overlay)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--accent)', background: 'var(--bg-elevated)' }}
+                >
+                  Clarity Export API Docs ↗
+                </a>
+                <IntegrationCard name="Shopify Store Integrator" status="soon" detail="Products collection metrics and repeat basket purchases." icon={ShoppingCart} />
+                <IntegrationCard name="Google reviews adapter" status="soon" detail="Aggregates star-ratings, praise, and feedback comments." icon={Star} />
+                <IntegrationCard name="Social channels slot" status="soon" detail="Collects Facebook and Instagram comment blocks." icon={Radio} />
+              </div>
+            </div>
+
+            {/* AI Agent Runner Stack */}
+            <div className="glass-card p-5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent-subtle rounded-full blur-xl pointer-events-none" />
+              <div className="flex items-center gap-2 mb-1">
+                <Settings className="animate-spin" style={{ animationDuration: '8s', color: 'var(--accent)' }} size={14} />
+                <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Orchestration logs</h2>
+              </div>
+              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Step-by-step trace sheets generated by the orchestrator run.</p>
+              
+              <div className="mt-4 space-y-4">
+                {!latestRun ? (
+                  <div className="rounded-xl border p-4 text-center text-xs leading-relaxed" style={{ borderColor: 'var(--border)', color: 'var(--text-tertiary)', background: 'var(--bg-elevated)' }}>
+                    🤖 Run "AI CTO" to see active agent trace logs and LTM fact boards.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-lg border p-3 text-xs" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold" style={{ color: 'var(--text-secondary)' }}>Run status</span>
+                        <span className={`uppercase font-bold text-[9px] tracking-wider ${latestRun.status === 'success' ? 'text-accent' : 'text-yellow-600 animate-pulse'}`} style={{ color: latestRun.status === 'success' ? 'var(--accent)' : undefined }}>{latestRun.status}</span>
+                      </div>
+                      <span className="text-[9px] block" style={{ color: 'var(--text-tertiary)' }}>Trigger: {latestRun.trigger_source} at {new Date(latestRun.started_at).toLocaleTimeString()}</span>
+                    </div>
+                    
+                    {toolCalls && toolCalls.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-[9px] font-bold block tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>Active Trace stack</span>
+                        <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                          {toolCalls.map((tc) => (
+                            <div key={tc.id} className="rounded-lg border p-2 text-[10px] leading-normal flex items-start gap-2" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                              <span className="inline-block mt-1 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
+                              <div className="truncate">
+                                <span className="font-bold block truncate" style={{ color: 'var(--text-primary)' }}>{tc.step}</span>
+                                <span className="font-mono text-[8px] block" style={{ color: 'var(--text-tertiary)' }}>tool: {tc.tool_name} • {tc.status}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {memories && memories.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="text-[9px] font-bold block tracking-wider uppercase" style={{ color: 'var(--text-secondary)' }}>Long-Term Facts (LTM)</span>
+                        <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                          {memories.map((memory) => (
+                            <div key={memory.id} className="rounded-lg border p-3 text-[10px] leading-relaxed" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)' }}>
+                              <div className="flex justify-between items-center gap-2 mb-1">
+                                <span className="font-bold font-mono text-[9px] tracking-tight" style={{ color: 'var(--accent)' }}>{memory.key}</span>
+                                <span className="text-[8px] font-bold" style={{ color: 'var(--text-tertiary)' }}>Conf: {pct(Number(memory.confidence), 1)}%</span>
+                              </div>
+                              <p className="leading-normal" style={{ color: 'var(--text-secondary)' }}>{memory.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }
