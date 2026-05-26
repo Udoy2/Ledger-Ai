@@ -1,31 +1,22 @@
 import { Pinecone } from "@pinecone-database/pinecone";
 
-// Initialise Pinecone client using env vars from .env.local
-// The SDK will automatically read PINECONE_API_KEY from environment variables
-const pinecone = new Pinecone();
-
-const index = pinecone.Index(process.env.PINECONE_INDEX!);
-
 type VectorRecord = {
   id: string;
   values: number[];
   metadata: Record<string, any>;
 };
 
-function scopedIndex(namespace?: string) {
-  return namespace ? index.namespace(namespace) : index;
+function getIndex() {
+  const indexName = process.env.PINECONE_INDEX;
+  if (!process.env.PINECONE_API_KEY || !indexName) {
+    throw new Error('Pinecone is not configured');
+  }
+  return new Pinecone().Index(indexName);
 }
 
-/** Upsert a single vector with metadata */
-export async function upsertVector(
-  id: string,
-  values: number[],
-  metadata: Record<string, any>,
-  namespace?: string
-) {
-  await scopedIndex(namespace).upsert({
-    records: [{ id, values, metadata }],
-  });
+function scopedIndex(namespace?: string) {
+  const index = getIndex();
+  return namespace ? index.namespace(namespace) : index;
 }
 
 /** Upsert many vectors in batches */
@@ -56,7 +47,3 @@ export async function queryVector(
   return resp.matches;
 }
 
-/** Utility to delete all vectors – use only for dev / reset */
-export async function deleteAllVectors() {
-  await index.deleteAll();
-}

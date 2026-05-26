@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -29,22 +28,15 @@ import {
 } from 'lucide-react';
 import { logoutAction } from '@/app/auth/actions';
 import { DashboardActions } from '@/components/DashboardClient';
+import { LazyDashboardWidgets } from '@/components/LazyDashboardWidgets';
 import { getAuthedBusiness } from '@/lib/auth';
 import { demoSignals } from '@/lib/demo';
 import { hasSupabaseEnv } from '@/lib/env';
-import { fallbackReport } from '@/lib/groq';
+import { fallbackReport } from '@/lib/ai';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import type { AiRun, Memory, Recommendation, Report, Signal, ToolCall } from '@/lib/types';
 
-const RagChat = dynamic(() => import('@/components/RagChat').then((m) => m.RagChat), {
-  ssr: false,
-  loading: () => <div className="surface-inset p-5 text-xs text-ink-soft">Loading AI agent chat...</div>,
-});
-
-const FaqSetupPanel = dynamic(() => import('@/components/FaqSetupPanel').then((m) => m.FaqSetupPanel), {
-  ssr: false,
-  loading: () => <div className="surface-inset p-5 text-xs text-ink-soft">Loading FAQ configuration...</div>,
-});
+export const dynamic = 'force-dynamic';
 
 const sourceLabels: Record<string, string> = {
   google_review: 'Google Review',
@@ -155,39 +147,39 @@ export default async function DashboardPage() {
     const [{ data: signals }, { data: latestReport }, { data: recs }, { data: run }, { data: mems }, { count: docsCount }] = await Promise.all([
       supabase
         .from('signals')
-        .select('*')
+        .select('id,business_id,source,type,raw_text,sentiment,topics,urgency,metadata,collected_at')
         .eq('business_id', business.id)
         .order('collected_at', { ascending: false })
         .limit(20),
       supabase
         .from('reports')
-        .select('*')
+        .select('id,business_id,content,signal_count,generated_at')
         .eq('business_id', business.id)
         .order('generated_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
         .from('recommendations')
-        .select('*')
+        .select('id,business_id,ai_run_id,title,rationale,impact,effort,confidence,status,evidence_signal_ids,evidence_note,metric_to_watch,next_step,created_at')
         .eq('business_id', business.id)
         .order('created_at', { ascending: false })
         .limit(6),
       supabase
         .from('ai_runs')
-        .select('*')
+        .select('id,business_id,trigger_source,status,started_at,finished_at,input_summary,output_summary,error_message')
         .eq('business_id', business.id)
         .order('started_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
         .from('memories')
-        .select('*')
+        .select('id,business_id,ai_run_id,kind,key,value,confidence,source,created_at')
         .eq('business_id', business.id)
         .order('created_at', { ascending: false })
         .limit(6),
       supabase
         .from('signals')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('business_id', business.id)
         .eq('source', 'website_faq_docs')
         .eq('type', 'faq_knowledge_doc'),
@@ -203,7 +195,7 @@ export default async function DashboardPage() {
     if (latestRun) {
       const { data } = await supabase
         .from('tool_calls')
-        .select('*')
+        .select('id,ai_run_id,business_id,step,tool_name,status,input,output,created_at')
         .eq('ai_run_id', latestRun.id)
         .order('created_at', { ascending: true });
       toolCalls = (data ?? []) as ToolCall[];
@@ -381,8 +373,7 @@ export default async function DashboardPage() {
             </div>
 
             {/* AI Agent Chat widget and FAQ widget */}
-            <RagChat />
-            <FaqSetupPanel docsCount={faqDocsCount} />
+            <LazyDashboardWidgets docsCount={faqDocsCount} />
 
             {/* Recommendations Drawer */}
             <div id="actions" className="glass-card p-6 scroll-mt-24">

@@ -61,8 +61,9 @@ function scoreKeywordMatch(variants: string[], signal: Pick<Signal, 'source' | '
     for (const token of qTokens) if (hayTokens.has(token)) overlap += 1;
     const tokenScore = overlap / qTokens.length;
     const phraseBonus = haystack.includes(variant.toLowerCase()) ? 0.2 : 0;
+    const topicBonus = signal.topics.some((topic) => variant.toLowerCase().includes(topic.toLowerCase())) ? 0.12 : 0;
     const urgencyBonus = signal.urgency === 'high' ? 0.08 : signal.urgency === 'medium' ? 0.04 : 0;
-    best = Math.max(best, Math.min(1, tokenScore + phraseBonus + urgencyBonus));
+    best = Math.max(best, Math.min(1, tokenScore + phraseBonus + topicBonus + urgencyBonus));
   }
 
   return best;
@@ -76,11 +77,24 @@ function recencyBoost(iso: unknown) {
 }
 
 function toKey(meta: Record<string, unknown>, fallbackId: string) {
+  const signalId = String(meta.signal_id ?? '');
+  if (signalId) return `signal:${signalId}`;
   const source = String(meta.source ?? '');
   const type = String(meta.type ?? '');
   const text = String(meta.raw_text ?? '');
   const createdAt = String(meta.created_at ?? '');
   return `${fallbackId}|${source}|${type}|${createdAt}|${text.slice(0, 120)}`;
+}
+
+function evidenceId(meta: Record<string, unknown>, fallbackId: string) {
+  const signalId = String(meta.signal_id ?? '');
+  return signalId ? `signal:${signalId}` : fallbackId;
+}
+
+function normalizeVectorScore(match: any, rank: number) {
+  const raw = Number(match?.score ?? 0);
+  if (Number.isFinite(raw) && raw > 0) return Math.max(0, Math.min(1, raw));
+  return 1 / (rank + 1);
 }
 
 export function buildHybridRagContext(matches: Array<{ id: string; metadata: Record<string, unknown>; finalScore: number }>) {
@@ -135,7 +149,7 @@ export async function retrieveHybridMatches(params: {
       if (params.end && new Date(String(meta.created_at ?? '')) > new Date(params.end)) return;
       const key = toKey(meta, String(m.id ?? `vector-${index}`));
       const existing = pool.get(key);
-      const vectorScore = 1 / (60 + index + 1);
+      const vectorScore = normalizeVectorScore(m, index + 1);
       const keywordScore = scoreKeywordMatch(variants, {
         source: String(meta.source ?? ''),
         type: String(meta.type ?? ''),
@@ -144,7 +158,7 @@ export async function retrieveHybridMatches(params: {
         urgency: (meta.urgency as Signal['urgency']) ?? 'low',
       });
       const candidate: HybridCandidate = {
-        id: String(m.id ?? `vector-${index}`),
+        id: evidenceId(meta, String(m.id ?? `vector-${index}`)),
         text: String(meta.raw_text ?? ''),
         metadata: meta,
         vectorRank: index + 1,
@@ -196,7 +210,7 @@ export async function retrieveHybridMatches(params: {
     };
     const key = toKey(meta, `signal:${signal.id}`);
     const existing = pool.get(key);
-    const keywordRankScore = 1 / (60 + index + 1);
+    const keywordRankScore = 1 / (index + 2);
     const candidate: HybridCandidate = {
       id: existing?.id ?? `signal:${signal.id}`,
       text: signal.raw_text,
@@ -215,7 +229,7 @@ export async function retrieveHybridMatches(params: {
       const recency = recencyBoost(candidate.metadata.created_at);
       const urgency = String(candidate.metadata.urgency ?? 'low');
       const urgencyBoost = urgency === 'high' ? 0.06 : urgency === 'medium' ? 0.03 : 0;
-      const finalScore = candidate.vectorScore * 0.55 + candidate.keywordScore * 0.35 + recency * 0.1 + urgencyBoost;
+      const finalScore = candidate.vectorScore * 0.45 + candidate.keywordScore * 0.35 + recency * 0.14 + urgencyBoost;
       return { ...candidate, finalScore };
     })
     .sort((a, b) => b.finalScore - a.finalScore)

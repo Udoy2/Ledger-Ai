@@ -11,6 +11,7 @@ type IndexSignalInput = {
   tag: SignalTag;
   metadata?: Record<string, unknown>;
   createdAt?: string;
+  signalId?: string;
 };
 
 export async function indexSignalInPinecone(input: IndexSignalInput) {
@@ -43,6 +44,7 @@ export async function indexSignalInPinecone(input: IndexSignalInput) {
       values: embedding,
       metadata: {
         business_id: input.businessId,
+        signal_id: input.signalId ?? null,
         source: input.source,
         type: input.type,
         raw_text: chunk,
@@ -59,6 +61,10 @@ export async function indexSignalInPinecone(input: IndexSignalInput) {
     });
   }
 
-  await upsertVectors(records, namespace);
-  return records.length;
+  try {
+    await upsertVectors(records, namespace);
+    return records.length;
+  } catch {
+    return 0;
+  }
 }

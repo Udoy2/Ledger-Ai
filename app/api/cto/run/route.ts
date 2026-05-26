@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
-import { getGroq } from '@/lib/groq';
+import { AI_LIMITS, AI_MODELS, buildHybridRagContext, getGroq, retrieveHybridMatches } from '@/lib/ai';
 import { summarizeSignals } from '@/lib/connectors';
-import { buildHybridRagContext, retrieveHybridMatches } from '@/lib/hybrid-rag';
 import type { Signal } from '@/lib/types';
 
 function parseRecommendationJson(text: string) {
   try {
     const cleaned = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleaned) as Array<Record<string, unknown>>;
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(cleaned) as Array<Record<string, unknown>> | { recommendations?: Array<Record<string, unknown>> };
+    if (Array.isArray(parsed)) return parsed;
+    return Array.isArray(parsed.recommendations) ? parsed.recommendations : [];
   } catch {
     return [];
   }
@@ -28,6 +28,12 @@ function criticFilter(recommendations: Array<Record<string, unknown>>) {
       const confidence = Number(rec.confidence ?? 0);
       return Boolean(title && rationale && metric && confidence >= 0.45);
     })
+    .map((rec) => ({
+      ...rec,
+      impact: ['low', 'medium', 'high'].includes(String(rec.impact)) ? rec.impact : 'medium',
+      effort: ['low', 'medium', 'high'].includes(String(rec.effort)) ? rec.effort : 'medium',
+      confidence: Math.max(0.45, Math.min(0.95, Number(rec.confidence ?? 0.6))),
+    }))
     .slice(0, 5);
 }
 
@@ -100,18 +106,19 @@ export async function POST(request: Request) {
     let recommendations: Array<Record<string, unknown>> = [];
     if (groq) {
       const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: AI_MODELS.smart,
         temperature: 0.2,
-        max_tokens: 900,
+        max_tokens: AI_LIMITS.strategyMaxTokens,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
             content:
-              'You are StrategyAgent and CriticAgent combined. Return ONLY JSON array. Each item keys: title, rationale, impact(low|medium|high), effort(low|medium|high), confidence(0-1), metric_to_watch, next_step, evidence_note. Use only provided context.',
+              'You are StrategyAgent and CriticAgent combined for a small-business intelligence system. Return strict JSON object with key recommendations. Each recommendation must be practical, evidence-backed, low-cost to validate, and include metric_to_watch.',
           },
           {
             role: 'user',
-            content: `Business: ${business.name}\nPrompt: ${prompt}\nContext:\n${context}`,
+            content: `Business: ${business.name}\nPrompt: ${prompt}\nSignal summary: ${JSON.stringify(summary)}\n\nReturn shape: {"recommendations":[{"title":"","rationale":"","impact":"low|medium|high","effort":"low|medium|high","confidence":0.0,"metric_to_watch":"","next_step":"","evidence_note":""}]}\n\nUse only this retrieved context:\n${context}`,
           },
         ],
       });
@@ -227,7 +234,7 @@ export async function POST(request: Request) {
         step: 'strategy',
         tool_name: 'StrategyAgent',
         status: 'success',
-        input: { model: groq ? 'llama-3.3-70b-versatile' : 'fallback' },
+        input: { model: groq ? AI_MODELS.smart : 'fallback' },
         output: { recommendations_created: savedRecs?.length ?? 0 },
       },
       {

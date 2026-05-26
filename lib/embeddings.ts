@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { Groq } from 'groq-sdk';
+import { AI_MODELS } from '@/lib/ai-config';
 
 const EMBEDDING_DIM = 384;
 
@@ -26,7 +27,7 @@ function fallbackEmbedding(text: string): number[] {
 
 export async function getEmbedding(text: string): Promise<number[]> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_EMBED_MODEL || 'llama3-text-embed-v2';
+  const model = AI_MODELS.embed;
   if (!apiKey) return fallbackEmbedding(text);
 
   try {

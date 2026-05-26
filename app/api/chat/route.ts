@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
-import { getGroq } from '@/lib/groq';
-import { buildHybridRagContext, retrieveHybridMatches } from '@/lib/hybrid-rag';
+import { AI_LIMITS, AI_MODELS, buildHybridRagContext, clampTopK, getGroq, retrieveHybridMatches } from '@/lib/ai';
+
+function extractiveFallback(context: string) {
+  if (!context.trim()) {
+    return 'I could not find enough matching signals yet. Load or sync more business data, then ask again.';
+  }
+  const chunks = context
+    .split('\n---\n')
+    .slice(0, 3)
+    .map((chunk, index) => `Evidence ${index + 1}:\n${chunk}`)
+    .join('\n\n');
+  return `I found relevant evidence, but the LLM is not configured. Here are the strongest retrieved signals:\n\n${chunks}`;
+}
 
 export async function POST(request: Request) {
   const { supabase, business } = await getAuthedBusiness();
@@ -25,20 +36,26 @@ export async function POST(request: Request) {
     supabase,
     businessId: business.id,
     prompt,
-    topK,
+    topK: clampTopK(topK, 8),
     start,
     end,
   });
   const context = buildHybridRagContext(hybrid.matches);
   const groq = getGroq();
   if (!groq) {
-    return NextResponse.json({ error: 'Groq not configured' }, { status: 500 });
+    return NextResponse.json({
+      answer: extractiveFallback(context),
+      sources: hybrid.matches.map((m) => m.id),
+      retrieved_count: hybrid.matches.length,
+      query_variants: hybrid.query_variants,
+      mode: 'extractive_fallback',
+    });
   }
 
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
+    model: AI_MODELS.fast,
     temperature: 0.35,
-    max_tokens: 1000,
+    max_tokens: AI_LIMITS.chatMaxTokens,
     messages: [
       {
         role: 'system',

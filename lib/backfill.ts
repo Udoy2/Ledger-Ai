@@ -19,6 +19,7 @@ export async function backfillSignalsToPinecone(businessId: string, signals: Sig
           },
           metadata: signal.metadata ?? {},
           createdAt: signal.collected_at,
+          signalId: signal.id,
         }),
       ),
     );
