@@ -1,61 +1,54 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { indexSignalInPinecone } from '@/lib/index-signal';
-import type { Sentiment, Urgency } from '@/lib/types';
+import { runConnectorPipeline } from '@/lib/connectors';
+import { ga4Provider } from '@/lib/providers/ga4';
 
-function buildGa4TestSignal(run: number) {
-  const visits = 1200 + run * 37;
-  const bounce = Math.max(42, 70 - (run % 9));
-  const checkoutDrop = Math.max(18, 44 - (run % 11));
-  const text = `GA4 daily summary: ${visits} visits in last 24h, ${bounce}% bounce rate on top product page, checkout drop-off ${checkoutDrop}%, and mobile traffic share ${78 + (run % 8)}%.`;
-  return {
-    source: 'google_analytics',
-    type: 'ga4_daily_summary',
-    raw_text: text,
-    sentiment: 'neutral' as Sentiment,
-    topics: ['traffic quality', 'bounce rate', 'checkout funnel'],
-    urgency: (bounce > 64 ? 'high' : 'medium') as Urgency,
-    metadata: {
-      mode: 'test_data',
-      visits_24h: visits,
-      bounce_rate: bounce,
-      checkout_drop_off: checkoutDrop,
-    },
-  };
-}
+/* ------------------------------------------------------------------ */
+/*  Shared runner                                                      */
+/* ------------------------------------------------------------------ */
 
-async function appendSignalForBusiness(
+async function runForBusiness(
   supabase: any,
-  businessId: string,
-  run: number,
+  business: { id: string; google_token?: unknown; ga4_property_id?: string },
 ) {
-  const signal = buildGa4TestSignal(run);
-  const { error: insertError } = await supabase.from('signals').insert({
-    business_id: businessId,
-    source: signal.source,
-    type: signal.type,
-    raw_text: signal.raw_text,
-    sentiment: signal.sentiment,
-    topics: signal.topics,
-    urgency: signal.urgency,
-    metadata: signal.metadata,
-  });
-  if (insertError) return 0;
+  // Deduplicate: Clean up any GA4 signals inserted in the last 12 hours for this business
+  // to prevent spam/duplicate cards when syncing multiple times on the same day.
+  const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  await supabase
+    .from('signals')
+    .delete()
+    .eq('business_id', business.id)
+    .eq('source', 'google_analytics')
+    .gte('collected_at', twelveHoursAgo);
 
-  return indexSignalInPinecone({
-    businessId,
-    source: signal.source,
-    type: signal.type,
-    rawText: signal.raw_text,
-    tag: {
-      sentiment: signal.sentiment,
-      topics: signal.topics,
-      urgency: signal.urgency,
-    },
-    metadata: signal.metadata,
+  const result = await runConnectorPipeline({
+    supabase,
+    business,
+    provider: ga4Provider,
+    mode: business.google_token ? 'api' : 'demo',
+    options: { _supabase: supabase }, // passed through to provider for token refresh
   });
+
+  await supabase.from('integration_runs').upsert(
+    {
+      business_id: business.id,
+      source: 'google_analytics',
+      status: 'success',
+      last_cursor: JSON.stringify({ ga4_property_id: business.ga4_property_id ?? null }),
+      last_success_at: new Date().toISOString(),
+      error_message: null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'business_id,source' },
+  );
+
+  return result;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Manual sync (authed user)                                          */
+/* ------------------------------------------------------------------ */
 
 async function handleManualSync() {
   const { supabase, business } = await getAuthedBusiness();
@@ -63,27 +56,23 @@ async function handleManualSync() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!business.google_token || !business.ga4_property_id) {
-    return NextResponse.json(
-      {
-        error: 'Google Analytics is not connected yet. Connect GA first, then sync.',
-        needs_connection: true,
-        connect_endpoint: '/api/integrations/ga4/connect',
-      },
-      { status: 400 },
-    );
-  }
+  const hasGoogleToken = !!business.google_token;
+  const hasPropertyId = !!business.ga4_property_id;
+  const mode = hasGoogleToken && hasPropertyId ? 'api' : 'demo';
 
-  const run = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-  const chunks = await appendSignalForBusiness(supabase, business.id, run);
+  const result = await runForBusiness(supabase, business);
+
   return NextResponse.json({
     success: true,
-    mode: 'test_data',
+    mode,
     business_id: business.id,
-    signals_inserted: 1,
-    vector_chunks_upserted: chunks,
+    ...result,
   });
 }
+
+/* ------------------------------------------------------------------ */
+/*  Cron sync (all connected businesses)                               */
+/* ------------------------------------------------------------------ */
 
 async function handleCronSync() {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -97,37 +86,37 @@ async function handleCronSync() {
   const supabase = createAdminClient();
   const { data: businesses, error } = await supabase
     .from('businesses')
-    .select('id')
-    .not('google_token', 'is', null)
-    .not('ga4_property_id', 'is', null)
+    .select('id, google_token, ga4_property_id')
     .order('created_at', { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  let signalsInserted = 0;
-  let chunksUpserted = 0;
-  for (let i = 0; i < (businesses ?? []).length; i++) {
-    const chunks = await appendSignalForBusiness(
-      supabase,
-      businesses![i].id,
-      Math.floor(Date.now() / (24 * 60 * 60 * 1000)) + i,
-    );
-    if (chunks > 0) {
-      signalsInserted += 1;
-      chunksUpserted += chunks;
-    }
+  let totalCollected = 0;
+  let totalInserted = 0;
+  let totalChunks = 0;
+
+  for (const business of businesses ?? []) {
+    const result = await runForBusiness(supabase, business);
+    totalCollected += result.collected;
+    totalInserted += result.inserted;
+    totalChunks += result.vector_chunks_upserted;
   }
 
   return NextResponse.json({
     success: true,
-    mode: 'test_data',
+    source: 'google_analytics',
     businesses_processed: businesses?.length ?? 0,
-    signals_inserted: signalsInserted,
-    vector_chunks_upserted: chunksUpserted,
+    collected: totalCollected,
+    inserted: totalInserted,
+    vector_chunks_upserted: totalChunks,
   });
 }
+
+/* ------------------------------------------------------------------ */
+/*  Route handlers                                                     */
+/* ------------------------------------------------------------------ */
 
 async function handle(request: Request) {
   const secret = request.headers.get('x-cron-secret');

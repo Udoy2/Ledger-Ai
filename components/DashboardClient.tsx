@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Bot, DatabaseZap, FileText, Link, RefreshCw } from 'lucide-react';
+import { Activity, Bot, DatabaseZap, FileText, Link, RefreshCw, Sparkles } from 'lucide-react';
 
 type DashboardClientProps = {
   hasSignals: boolean;
@@ -16,9 +16,7 @@ async function postJson(path: string, body?: Record<string, unknown>) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const json = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(json.error ?? 'Request failed');
-  }
+  if (!response.ok) throw new Error(json.error ?? 'Request failed');
   return json;
 }
 
@@ -57,65 +55,101 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
     await run('/api/cron/collect/clarity', { numOfDays: num, dimension1: 'URL' });
   }
 
+  const btnBase =
+    'btn-secondary inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none';
+
   return (
-    <div className="flex flex-wrap items-start gap-2">
-      <button
-        onClick={() => run('/api/seed')}
-        disabled={pending || hasSignals || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <DatabaseZap size={16} />
-        {hasSignals ? 'Demo loaded' : 'Load demo data'}
-      </button>
-      <button
-        onClick={() => run('/api/integrations/ga4/connect', { ga4_property_id: 'test-property' })}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Link size={16} />
-        Connect GA (test)
-      </button>
-      <button
-        onClick={() => run('/api/cron/collect/ga4')}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Activity size={16} />
-        Sync GA test data
-      </button>
-      <button
-        onClick={connectClarity}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Link size={16} />
-        Connect Clarity
-      </button>
-      <button
-        onClick={syncClarity}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Activity size={16} />
-        Sync Clarity
-      </button>
-      <button
-        onClick={() => run('/api/cto/run')}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Bot size={16} />
-        Run AI CTO
-      </button>
-      <button
-        onClick={() => run('/api/report/generate')}
-        disabled={pending || !liveBackend}
-        className="inline-flex items-center gap-2 rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-wait disabled:opacity-70"
-      >
-        {pending ? <RefreshCw size={16} className="animate-spin" /> : <FileText size={16} />}
-        Generate report
-      </button>
-      {error ? <p className="w-full text-xs font-semibold text-red-600">{error}</p> : null}
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => run('/api/seed')}
+          disabled={pending || hasSignals || !liveBackend}
+          className={btnBase}
+          title="Seed initial demo data"
+        >
+          <DatabaseZap size={13} style={{ color: 'var(--accent)' }} />
+          {hasSignals ? 'Demo loaded' : 'Load demo data'}
+        </button>
+
+        <div
+          style={{ width: '1px', height: '20px', background: 'var(--border)' }}
+          className="hidden sm:block"
+        />
+
+        <button
+          onClick={() => { if (liveBackend) window.location.href = '/api/integrations/ga4/connect'; }}
+          disabled={pending || !liveBackend}
+          className={btnBase}
+        >
+          <Link size={13} style={{ color: 'var(--blue)' }} />
+          Connect GA4
+        </button>
+
+        <button
+          onClick={() => run('/api/cron/collect/ga4')}
+          disabled={pending || !liveBackend}
+          className={btnBase}
+        >
+          <Activity size={13} style={{ color: 'var(--accent)' }} />
+          Sync GA4
+        </button>
+
+        <button
+          onClick={connectClarity}
+          disabled={pending || !liveBackend}
+          className={btnBase}
+        >
+          <Link size={13} style={{ color: 'var(--blue)' }} />
+          Connect Clarity
+        </button>
+
+        <button
+          onClick={syncClarity}
+          disabled={pending || !liveBackend}
+          className={btnBase}
+        >
+          <Activity size={13} style={{ color: 'var(--blue)' }} />
+          Sync Clarity
+        </button>
+
+        <button
+          onClick={() => run('/api/cto/run')}
+          disabled={pending || !liveBackend}
+          className={btnBase}
+          title="Run multi-agent AI orchestrator"
+        >
+          <Bot size={13} style={{ color: '#a78bfa' }} />
+          Run AI CTO
+        </button>
+
+        {/* Primary CTA — right-aligned */}
+        <div className="flex-1 flex justify-end">
+          <button
+            onClick={() => run('/api/report/generate')}
+            disabled={pending || !liveBackend}
+            className="btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold disabled:cursor-not-allowed"
+          >
+            {pending
+              ? <RefreshCw size={13} className="animate-spin" />
+              : <Sparkles size={13} />
+            }
+            Generate Report
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium"
+          style={{
+            background: 'var(--red-subtle)',
+            border: '1px solid rgba(239,68,68,0.2)',
+            color: 'var(--red)',
+          }}
+        >
+          <span>⚠</span> {error}
+        </div>
+      )}
     </div>
   );
 }

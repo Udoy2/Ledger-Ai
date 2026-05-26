@@ -1,5 +1,5 @@
 {
-  "name": "knowledgeloop-mvp",
+  "name": "ledgerai-mvp",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,7 @@
     "@pinecone-database/pinecone": "^7.2.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "googleapis": "^172.0.0",
     "groq-sdk": "^0.15.0",
     "lucide-react": "^0.468.0",
     "next": "^14.2.23",

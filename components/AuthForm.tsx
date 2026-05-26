@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, BarChart3 } from 'lucide-react';
+import { ArrowRight, BarChart3, CheckCircle2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type AuthFormProps = {
   mode: 'signup' | 'login';
@@ -11,91 +12,121 @@ export function AuthForm({ mode, action, error }: AuthFormProps) {
   const isSignup = mode === 'signup';
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-[1fr_440px]">
-        <section className="flex flex-col justify-between px-6 py-8 sm:px-10">
-          <Link href="/" className="inline-flex w-fit items-center gap-2 text-sm font-bold text-loop">
-            <BarChart3 size={20} />
-            KnowledgeLoop
-          </Link>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', position: 'relative' }}>
+      
+      <div
+        className="glass-card w-full relative z-10"
+        style={{
+          maxWidth: '960px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Left — branding panel */}
+        <div
+          className="glass-sidebar"
+          style={{
+            padding: '2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            gap: '2rem',
+            borderRight: '1px solid var(--border)',
+            borderRadius: 0,
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2 no-underline" style={{ color: 'var(--text-primary)' }}>
+              <span
+                className="flex items-center justify-center w-8 h-8 rounded-lg"
+                style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--border-hover)' }}
+              >
+                <BarChart3 size={15} />
+              </span>
+              <span className="font-extrabold text-sm">LedgerAI</span>
+            </Link>
+            <ThemeToggle />
+          </div>
 
-          <div className="max-w-2xl py-14">
-            <p className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-loop">AI business intelligence</p>
-            <h1 className="text-4xl font-black leading-tight text-ink sm:text-5xl">
-              Connect your store once. Get the next best move every 72 hours.
+          <div style={{ flex: 1 }}>
+            <p className="mono-label text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--accent-text)' }}>
+              AI business intelligence
+            </p>
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight" style={{ color: 'var(--text-primary)' }}>
+              Connect once.<br />Get the next best move.
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-              KnowledgeLoop turns reviews, comments, carts, support chats, and analytics into one plain-English insight feed.
+            <p className="text-sm leading-relaxed mt-4" style={{ color: 'var(--text-secondary)' }}>
+              LedgerAI turns reviews, comments, carts, support chats, and analytics into one plain-English insight feed.
             </p>
           </div>
 
-          <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
-            <div className="border-t border-line pt-3">Google, Shopify, social, chat, analytics</div>
-            <div className="border-t border-line pt-3">AI sentiment, topics, urgency</div>
-            <div className="border-t border-line pt-3">Reports, alerts, and action lists</div>
+          <div className="space-y-2.5">
+            {[
+              'Google, Shopify, social, chat, analytics',
+              'AI-tagged sentiment, topics, urgency',
+              'Executive reports and action lists',
+            ].map((item) => (
+              <div key={item} className="flex items-start gap-2">
+                <CheckCircle2 size={13} style={{ color: 'var(--accent)', marginTop: '2px', flexShrink: 0 }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item}</span>
+              </div>
+            ))}
           </div>
-        </section>
+        </div>
 
-        <section className="flex items-center bg-white px-6 py-10 shadow-soft sm:px-10">
-          <form action={action} className="w-full space-y-5">
+        {/* Right — form panel */}
+        <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <form action={action} className="space-y-5">
             <div>
-              <h2 className="text-2xl font-black text-ink">{isSignup ? 'Start your loop' : 'Welcome back'}</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                {isSignup ? 'Create the owner account and your business workspace.' : 'Open your business intelligence dashboard.'}
+              <h2 className="text-xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                {isSignup ? 'Create workspace' : 'Welcome back'}
+              </h2>
+              <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                {isSignup ? 'Set up your business analytics workspace.' : 'Log in to your intelligence dashboard.'}
               </p>
             </div>
 
-            {error ? <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div> : null}
+            {error && (
+              <div
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-semibold"
+                style={{ background: 'var(--red-subtle)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--red)' }}
+              >
+                ⚠ {error}
+              </div>
+            )}
 
-            {isSignup ? (
-              <label className="block">
-                <span className="text-sm font-bold text-slate-700">Business name</span>
-                <input
-                  name="businessName"
-                  required
-                  placeholder="Northstar Leather"
-                  className="mt-2 w-full rounded-md border border-line bg-white px-3 py-3 outline-none ring-loop/20 focus:ring-4"
-                />
+            {isSignup && (
+              <label className="block space-y-1.5">
+                <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Business name</span>
+                <input name="businessName" required placeholder="e.g. Northstar Leather" className="w-full px-3.5 py-2.5 rounded-xl text-sm" />
               </label>
-            ) : null}
+            )}
 
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="owner@example.com"
-                className="mt-2 w-full rounded-md border border-line bg-white px-3 py-3 outline-none ring-loop/20 focus:ring-4"
-              />
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Email</span>
+              <input name="email" type="email" required placeholder="owner@example.com" className="w-full px-3.5 py-2.5 rounded-xl text-sm" />
             </label>
 
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Password</span>
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                placeholder="At least 6 characters"
-                className="mt-2 w-full rounded-md border border-line bg-white px-3 py-3 outline-none ring-loop/20 focus:ring-4"
-              />
+            <label className="block space-y-1.5">
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Password</span>
+              <input name="password" type="password" required minLength={6} placeholder="At least 6 characters" className="w-full px-3.5 py-2.5 rounded-xl text-sm" />
             </label>
 
-            <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-loop px-4 py-3 font-bold text-white transition hover:bg-emerald-700">
+            <button className="btn-primary w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold">
               {isSignup ? 'Create workspace' : 'Log in'}
-              <ArrowRight size={18} />
+              <ArrowRight size={14} />
             </button>
 
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
               {isSignup ? 'Already have an account?' : 'Need a workspace?'}{' '}
-              <Link href={isSignup ? '/auth/login' : '/auth/signup'} className="font-bold text-loop">
+              <Link href={isSignup ? '/auth/login' : '/auth/signup'} className="font-semibold no-underline" style={{ color: 'var(--accent-text)' }}>
                 {isSignup ? 'Log in' : 'Sign up'}
               </Link>
             </p>
           </form>
-        </section>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

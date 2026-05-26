@@ -24,7 +24,9 @@ export function RagChat() {
         body: JSON.stringify({ prompt: question, topK: 10 }),
       });
       const json = await res.json();
-      const answer = res.ok ? String(json.answer ?? 'No answer generated.') : String(json.error ?? 'Request failed');
+      const answer = res.ok
+        ? String(json.answer ?? 'No answer generated.')
+        : String(json.error ?? 'Request failed');
       setMessages((prev) => [...prev, { role: 'assistant', content: answer }]);
     } finally {
       setLoading(false);
@@ -33,37 +35,55 @@ export function RagChat() {
 
   return (
     <div className="surface p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <MessageCircle size={18} className="text-teal-700" />
-        <h2 className="text-xl font-semibold text-slate-900">Analyst Chat</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <MessageCircle size={16} style={{ color: 'var(--accent)' }} />
+        <h2 className="text-sm font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+          Analyst Chat
+        </h2>
       </div>
-      <div className="max-h-80 space-y-3 overflow-y-auto rounded-md border border-[var(--line)] bg-slate-50 p-3">
+
+      {/* Message thread */}
+      <div
+        className="max-h-72 min-h-[100px] space-y-3 overflow-y-auto p-3 rounded-xl"
+        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}
+      >
         {messages.length === 0 ? (
-          <p className="text-sm text-slate-500">Ask about trends, risks, conversion, retention, and what to improve next.</p>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+            Ask about trends, risks, conversion, retention — the AI has semantic access to all your signals.
+          </p>
         ) : (
           messages.map((m, i) => (
             <div key={`${m.role}-${i}`} className={m.role === 'user' ? 'text-right' : 'text-left'}>
-              <p className={`inline-block max-w-[90%] whitespace-pre-wrap rounded-md px-3 py-2 text-sm ${m.role === 'user' ? 'bg-teal-700 text-white' : 'border border-[var(--line)] bg-white text-slate-700'}`}>
+              <p
+                className="inline-block max-w-[88%] whitespace-pre-wrap text-xs leading-relaxed px-3.5 py-2.5 rounded-xl"
+                style={
+                  m.role === 'user'
+                    ? { background: 'var(--accent)', color: '#fff', fontWeight: 500 }
+                    : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
+                }
+              >
                 {m.content}
               </p>
             </div>
           ))
         )}
       </div>
+
+      {/* Input */}
       <form onSubmit={onSubmit} className="mt-3 flex gap-2">
         <input
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Ask your business AI..."
-          className="flex-1 rounded-md border border-[var(--line)] px-3 py-2 text-sm outline-none focus:border-teal-700"
+          placeholder="Ask your store AI..."
+          className="flex-1 px-3.5 py-2.5 rounded-xl text-xs"
         />
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="btn-primary px-4 py-2.5 rounded-xl text-xs font-semibold disabled:opacity-60 shrink-0 inline-flex items-center gap-1.5"
         >
-          <Send size={14} />
-          {loading ? 'Thinking' : 'Send'}
+          <Send size={12} />
+          {loading ? 'Thinking…' : 'Send'}
         </button>
       </form>
     </div>
