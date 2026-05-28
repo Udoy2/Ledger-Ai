@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PulseDesk Hackathon Pitch</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --text: #f8fafc;
+      --muted: #a7b0c0;
+      --accent: #10b981;
+      --blue: #38bdf8;
+      --line: rgba(255,255,255,0.12);
+      --panel: rgba(255,255,255,0.06);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { overflow: hidden; }
+    .deck { height: 100vh; width: 100vw; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; display: flex; }
+    .slide {
+      min-width: 100vw;
+      height: 100vh;
+      scroll-snap-align: start;
+      display: grid;
+      place-items: center;
+      padding: 44px;
+      position: relative;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(16,185,129,0.16), transparent 30%),
+        radial-gradient(circle at 86% 84%, rgba(56,189,248,0.12), transparent 32%),
+        linear-gradient(135deg, #0f172a, #111827 58%, #0b1120);
+    }
+    .content { width: min(1180px, 100%); }
+    .kicker { color: var(--accent); font-size: 13px; font-weight: 850; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { font-size: clamp(52px, 7vw, 92px); line-height: 0.95; margin: 0 0 20px; letter-spacing: -0.045em; }
+    h2 { font-size: clamp(34px, 4.8vw, 58px); line-height: 1.02; margin: 0 0 22px; letter-spacing: -0.035em; }
+    h3 { font-size: 22px; margin: 0 0 10px; color: var(--text); }
+    p { font-size: 21px; line-height: 1.42; color: var(--muted); margin: 0 0 16px; max-width: 960px; }
+    ul { display: grid; gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+    li { font-size: 20px; line-height: 1.3; color: var(--text); padding-left: 24px; position: relative; }
+    li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); position: absolute; left: 0; top: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
+    .cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 18px 50px rgba(0,0,0,0.25); }
+    .card p, .card li { font-size: 17px; }
+    .quote { font-size: clamp(32px, 4.2vw, 56px); line-height: 1.08; color: var(--text); font-weight: 850; letter-spacing: -0.04em; max-width: 1040px; }
+    .accent { color: var(--accent); }
+    .blue { color: var(--blue); }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: clamp(18px, 2vw, 26px); line-height: 1.45; background: rgba(0,0,0,0.34); border: 1px solid var(--line); padding: 24px; border-radius: 16px; color: #d1fae5; white-space: pre-wrap; }
+    .pill { display: inline-flex; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 9px 13px; color: var(--text); font-weight: 700; margin: 5px; font-size: 17px; }
+    .center { text-align: center; }
+    .center p { margin-left: auto; margin-right: auto; }
+    .footer { position: absolute; bottom: 18px; left: 44px; right: 44px; display: flex; justify-content: space-between; color: rgba(248,250,252,0.45); font-size: 13px; }
+    code { color: #d1fae5; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 6px; }
+    @media print {
+      body { overflow: visible; }
+      .deck { display: block; height: auto; overflow: visible; }
+      .slide { page-break-after: always; height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck">
+    <section class="slide"><div class="content center"><div class="kicker">SME Dashboard Hackathon</div><h1>PulseDesk</h1><p class="quote">Most dashboards tell SMEs what happened. PulseDesk tells them what to do next, why, and what evidence proves it.</p></div><div class="footer"><span>PulseDesk</span><span>1 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Problem and Motivation</div><h2>SMEs have data everywhere, but decision clarity nowhere.</h2><p>Signals are scattered across analytics, reviews, checkout behavior, support chats, FAQ questions, and social comments.</p><div class="grid"><div class="card"><h3>Business pain</h3><ul><li>No analyst or BI team</li><li>Too many tools</li><li>Patterns are missed</li><li>Decisions become reactive</li></ul></div><div class="card"><h3>What they need</h3><ul><li>Unified signal view</li><li>Plain-English explanation</li><li>Urgent risks and opportunities</li><li>Evidence-backed next steps</li></ul></div></div></div><div class="footer"><span>Problem</span><span>2 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Product Solution</div><h2>An operator-first dashboard that turns signals into decisions.</h2><div class="code">collect -> normalize -> store -> index -> retrieve -> reason -> recommend -> remember</div><div class="cards3"><div class="card"><h3>KPI Overview</h3><p>Fast business health summary.</p></div><div class="card"><h3>AI Report</h3><p>Executive analysis in plain English.</p></div><div class="card"><h3>AI CTO</h3><p>Action cards with evidence.</p></div><div class="card"><h3>RAG Chat</h3><p>Ask grounded business questions.</p></div><div class="card"><h3>Signal Feed</h3><p>Raw evidence stays visible.</p></div><div class="card"><h3>FAQ Loop</h3><p>Customer questions become signals.</p></div></div></div><div class="footer"><span>Solution</span><span>3 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Technical Architecture</div><h2>Full-stack AI analytics architecture.</h2><div class="grid"><div class="card"><h3>Frontend</h3><ul><li>Next.js App Router</li><li>React + Tailwind</li><li>Lazy-loaded AI widgets</li><li>Dashboard optimized for scanning</li></ul></div><div class="card"><h3>Backend</h3><ul><li>Next.js route handlers</li><li>Supabase Auth + Postgres</li><li>Row-Level Security</li><li>Cron-ready collectors</li></ul></div><div class="card"><h3>AI/Retrieval</h3><ul><li>Groq LLMs</li><li>Embeddings path</li><li>Pinecone vectors</li><li>Hybrid RAG reranker</li></ul></div><div class="card"><h3>Reliability</h3><ul><li>Deterministic fallbacks</li><li>Bounded retrieval</li><li>Non-fatal vector indexing</li><li>Demo mode</li></ul></div></div></div><div class="footer"><span>Architecture</span><span>4 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Data Model</div><h2>One canonical signal ledger powers the system.</h2><p>Every source becomes a normalized <code>signal</code> with business ID, source, type, raw text, sentiment, topics, urgency, metadata, and timestamp.</p><div class="grid"><div class="card"><h3>Core tables</h3><ul><li><code>businesses</code></li><li><code>signals</code></li><li><code>reports</code></li><li><code>integration_runs</code></li></ul></div><div class="card"><h3>AI infra tables</h3><ul><li><code>ai_runs</code></li><li><code>tool_calls</code></li><li><code>recommendations</code></li><li><code>memories</code></li><li><code>entities</code> + <code>relationships</code></li></ul></div></div></div><div class="footer"><span>Data Model</span><span>5 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">AI Usage and Model Strategy</div><h2>AI where it matters, deterministic logic where it is safer.</h2><div class="grid"><div class="card"><h3 class="accent">Fast model</h3><ul><li>Signal tagging</li><li>FAQ answers</li><li>Analyst chat</li></ul></div><div class="card"><h3 class="blue">Smart model</h3><ul><li>Executive reports</li><li>AI CTO strategy</li><li>Recommendation synthesis</li></ul></div></div><ul><li>One strategic LLM call inside CTO orchestration.</li><li>JSON-mode outputs for structured AI steps.</li><li>Fallback reports and extractive answers without Groq.</li><li>Fast frequent tasks, smart high-value tasks.</li></ul></div><div class="footer"><span>AI Strategy</span><span>6 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Hybrid RAG Pipeline</div><h2>Retrieval designed for sparse, messy SME data.</h2><div class="code">question
+  -> deterministic query rewrite
+  -> embedding generation
+  -> Pinecone vector retrieval
+  -> Supabase keyword retrieval
+  -> business/source/type/date filters
+  -> rerank: vector + keyword + recency + urgency
+  -> evidence context
+  -> LLM answer/report/recommendation</div></div><div class="footer"><span>Hybrid RAG</span><span>7 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">AI CTO Orchestration</div><h2>Controlled agent workflow with inspectable outputs.</h2><div class="grid"><div class="card"><h3>Stages</h3><ul><li>DataQualityAgent</li><li>MetricAnalystAgent</li><li>StrategyAgent</li><li>CriticAgentDeterministic</li><li>MemoryAgent</li></ul></div><div class="card"><h3>Execution</h3><div class="code" style="font-size:17px">deterministic prep
+  -> one strategic LLM call
+  -> deterministic critic
+  -> recommendations
+  -> memory + graph persistence</div></div></div><p>Runs are stored in <code>ai_runs</code>, <code>tool_calls</code>, <code>recommendations</code>, and <code>memories</code>, so the AI is explainable.</p></div><div class="footer"><span>Orchestration</span><span>8 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">FAQ Widget and Learning Loop</div><h2>Customer questions become business intelligence.</h2><div class="code">owner uploads docs
+  -> docs become website_faq_docs signals
+  -> docs are chunked and indexed
+  -> embed script mounts iframe
+  -> visitor asks question
+  -> RAG retrieves FAQ docs only
+  -> answer is generated
+  -> Q&A becomes website_faq_agent signal</div></div><div class="footer"><span>FAQ Loop</span><span>9 / 11</span></div></section>
+
+    <section class="slide"><div class="content"><div class="kicker">Security, Performance, Cost</div><h2>Built for practical SME deployment.</h2><div class="grid"><div class="card"><h3>Security</h3><ul><li>Supabase Auth</li><li>RLS on core tables</li><li>Business-scoped vector namespaces</li><li>FAQ embed keys + origin allowlist</li></ul></div><div class="card"><h3>Performance</h3><ul><li>Exact dashboard column selects</li><li>Lazy-loaded AI panels</li><li>Batched vector indexing</li><li>Bounded retrieval scans</li></ul></div><div class="card"><h3>Cost control</h3><ul><li>Free-tier Groq/Supabase/Pinecone</li><li>Fast model for frequent tasks</li><li>Smart model only for synthesis</li><li>Deterministic fallbacks</li></ul></div><div class="card"><h3>Reliability</h3><ul><li>No-AI fallback report</li><li>Extractive chat fallback</li><li>Keyword fallback if vectors fail</li><li>Demo data path</li></ul></div></div></div><div class="footer"><span>Security and Cost</span><span>10 / 11</span></div></section>
+
+    <section class="slide"><div class="content center"><div class="kicker">Closing</div><h1>PulseDesk</h1><p class="quote">It is not just analytics. It is an AI-powered decision loop for SMEs.</p><p>Understand performance, identify risks, find opportunities, act with confidence, and trace every recommendation back to evidence.</p></div><div class="footer"><span>Closing</span><span>11 / 11</span></div></section>
+  </main>
+</body>
+</html>
