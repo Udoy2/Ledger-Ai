@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
-import { tagSignal } from '@/lib/groq';
-import { indexSignalInPinecone } from '@/lib/index-signal';
+import { indexSignalInPinecone, tagSignal } from '@/lib/ai';
 
 export async function POST(request: Request) {
   const { supabase, business } = await getAuthedBusiness();
@@ -17,19 +16,8 @@ export async function POST(request: Request) {
   const source = String(body.source);
   const type = String(body.type);
   const rawText = String(body.raw_text);
-  const createdAt = new Date().toISOString();
 
   const tag = await tagSignal(rawText);
-  const vectorChunksUpserted = await indexSignalInPinecone({
-    businessId: business.id,
-    source,
-    type,
-    rawText,
-    tag,
-    metadata: body.metadata ?? {},
-    createdAt,
-  });
-
   const { data, error } = await supabase
     .from('signals')
     .insert({
@@ -48,6 +36,17 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const vectorChunksUpserted = await indexSignalInPinecone({
+    businessId: business.id,
+    source,
+    type,
+    rawText,
+    tag,
+    metadata: body.metadata ?? {},
+    createdAt: data.collected_at,
+    signalId: data.id,
+  });
 
   return NextResponse.json({
     success: true,

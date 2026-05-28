@@ -1,5 +1,4 @@
-import { indexSignalInPinecone } from '@/lib/index-signal';
-import { tagSignal } from '@/lib/groq';
+import { indexSignalInPinecone, tagSignal } from '@/lib/ai';
 import type { Signal, SignalTag } from '@/lib/types';
 
 export type ConnectorPayload = {
@@ -101,6 +100,7 @@ export async function runConnectorPipeline(params: {
           },
           metadata: row.metadata ?? {},
           createdAt: row.collected_at,
+          signalId: row.id,
         }),
       ),
     );

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Bot, DatabaseZap, FileText, Link, RefreshCw, Sparkles } from 'lucide-react';
+import { Activity, Bot, DatabaseZap, Link, RefreshCw, Sparkles } from 'lucide-react';
 
 type DashboardClientProps = {
   hasSignals: boolean;

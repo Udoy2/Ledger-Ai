@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { AI_LIMITS, AI_MODELS } from '@/lib/ai-config';
 import type { Business, Signal, SignalTag } from '@/lib/types';
 
 const fallbackTag: SignalTag = {
@@ -21,19 +22,34 @@ function safeJson<T>(text: string, fallback: T): T {
   }
 }
 
+function cleanTopics(value: unknown) {
+  if (!Array.isArray(value)) return fallbackTag.topics;
+  return value
+    .filter((topic): topic is string => typeof topic === 'string')
+    .map((topic) => topic.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
 export async function tagSignal(rawText: string): Promise<SignalTag> {
   const groq = getGroq();
   if (!groq) return fallbackTag;
 
   try {
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: AI_MODELS.fast,
       temperature: 0.1,
-      max_tokens: 180,
+      max_tokens: AI_LIMITS.tagMaxTokens,
+      response_format: { type: 'json_object' },
       messages: [
         {
+          role: 'system',
+          content:
+            'You classify e-commerce business signals cheaply and consistently. Return strict JSON only.',
+        },
+        {
           role: 'user',
-          content: `Analyze this customer signal. Return ONLY valid JSON with keys: sentiment (positive/negative/neutral), topics (array of max 3 short strings), urgency (low/medium/high).\n\nSignal: "${rawText}"\n\nJSON only, no explanation:`,
+          content: `Analyze this customer signal. Return JSON with keys: sentiment (positive|negative|neutral), topics (array of max 3 short strings), urgency (low|medium|high).\n\nSignal: "${rawText}"`,
         },
       ],
     });
@@ -41,7 +57,7 @@ export async function tagSignal(rawText: string): Promise<SignalTag> {
     const parsed = safeJson<SignalTag>(completion.choices[0]?.message?.content ?? '', fallbackTag);
     return {
       sentiment: ['positive', 'negative', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
-      topics: Array.isArray(parsed.topics) ? parsed.topics.slice(0, 3) : fallbackTag.topics,
+      topics: cleanTopics(parsed.topics),
       urgency: ['low', 'medium', 'high'].includes(parsed.urgency) ? parsed.urgency : 'low',
     };
   } catch {
@@ -100,36 +116,3 @@ Turn repeated questions into conversion assets. Add delivery timelines, laptop-f
 `;
 }
 
-export async function generateInsightReport(business: Pick<Business, 'name' | 'brand_voice'>, signals: Signal[]) {
-  const groq = getGroq();
-  if (!groq || signals.length === 0) return fallbackReport(business, signals);
-
-  const context = signals
-    .map((signal, index) => {
-      return `${index + 1}. [${signal.source} / ${signal.type}] ${signal.raw_text} (sentiment: ${signal.sentiment}, urgency: ${signal.urgency}, topics: ${signal.topics.join(', ')})`;
-    })
-    .join('\n');
-
-  try {
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.35,
-      max_tokens: 1800,
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are LedgerAI, an expert business intelligence AI analyst for e-commerce owners. Write direct, warm, specific, evidence-backed reports. Avoid corporate jargon. Every recommendation must connect to observed signals.',
-        },
-        {
-          role: 'user',
-          content: `Business: ${business.name}\nPreferred voice: ${business.brand_voice}\n\nAnalyze these cross-source customer and behavior signals:\n\n${context}\n\nReturn a markdown report with exactly these sections: Executive Summary, #1 Problem, #1 Opportunity, What's Working, Action List, Signal Summary.`,
-        },
-      ],
-    });
-
-    return completion.choices[0]?.message?.content ?? fallbackReport(business, signals);
-  } catch {
-    return fallbackReport(business, signals);
-  }
-}

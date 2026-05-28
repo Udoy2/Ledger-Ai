@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { originAllowed, getFaqConfig } from '@/lib/faq-widget';
-import { buildHybridRagContext, retrieveHybridMatches } from '@/lib/hybrid-rag';
-import { getGroq } from '@/lib/groq';
-import { indexSignalInPinecone } from '@/lib/index-signal';
+import { AI_LIMITS, AI_MODELS, buildHybridRagContext, getGroq, indexSignalInPinecone, retrieveHybridMatches } from '@/lib/ai';
 import type { SignalTag } from '@/lib/types';
 
 type CachedBusiness = {
@@ -106,9 +104,9 @@ export async function POST(request: Request) {
   if (groq) {
     try {
       const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: AI_MODELS.fast,
         temperature: 0.15,
-        max_tokens: 320,
+        max_tokens: AI_LIMITS.faqMaxTokens,
         messages: [
           {
             role: 'system',
@@ -165,6 +163,7 @@ export async function POST(request: Request) {
       signal_id: inserted?.id ?? null,
       docs_only_mode: true,
     },
+    signalId: inserted?.id ?? undefined,
   });
 
   return NextResponse.json({

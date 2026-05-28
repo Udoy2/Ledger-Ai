@@ -1,4 +1,4 @@
-import { indexSignalInPinecone } from '@/lib/index-signal';
+import { indexSignalInPinecone } from '@/lib/ai';
 import type { SignalTag } from '@/lib/types';
 
 export type FaqDocInput = {
@@ -109,6 +109,7 @@ export async function ingestFaqDocs(params: {
             signal_id: row.id,
           },
           createdAt: row.collected_at,
+          signalId: row.id,
         }),
       ),
     );

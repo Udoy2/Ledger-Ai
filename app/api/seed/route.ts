@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedBusiness } from '@/lib/auth';
 import { demoSignals } from '@/lib/demo';
-import { backfillSignalsToPinecone } from '@/lib/backfill';
+import { backfillSignalsToPinecone } from '@/lib/ai';
 import type { Signal } from '@/lib/types';
 
 export async function POST() {

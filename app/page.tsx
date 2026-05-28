@@ -74,6 +74,11 @@ export default function HomePage() {
             >
               Open dashboard
             </Link>
+            <Link href="/pitch"
+              className="btn-secondary inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold"
+            >
+              View pitch deck <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
 
