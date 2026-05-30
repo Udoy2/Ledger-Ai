@@ -1,6 +1,6 @@
-# KnowledgeLoop MVP
+# LedgerAI MVP
 
-KnowledgeLoop is an AI insight dashboard for e-commerce owners. The MVP proves the core loop:
+LedgerAI is an AI insight dashboard for e-commerce owners. The MVP proves the core loop:
 
 1. Owner signs up and gets a business workspace.
 2. Signals are collected into one normalized table.
