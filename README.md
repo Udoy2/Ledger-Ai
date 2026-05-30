@@ -63,7 +63,8 @@ npm run dev
 - Click `Sync GA test data` to append fresh analytics-style signals (also schedulable every 24h)
 
 
-##Ai Usage
+## AI Usage
+
 <img width="1926" height="2048" alt="image" src="https://github.com/user-attachments/assets/312ff543-8e04-4c89-be57-571f9f4c21e1" />
 
 
