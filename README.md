@@ -62,6 +62,11 @@ npm run dev
 - Use `RAG Chat` to ask follow-up business questions grounded in stored vectors
 - Click `Sync GA test data` to append fresh analytics-style signals (also schedulable every 24h)
 
+
+##Ai Usage
+<img width="1926" height="2048" alt="image" src="https://github.com/user-attachments/assets/312ff543-8e04-4c89-be57-571f9f4c21e1" />
+
+
 ## API Endpoints
 
 - `POST /api/ingest`: ingest one authenticated signal
