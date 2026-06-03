@@ -5,7 +5,10 @@ export async function GET(request: Request) {
   const key = url.searchParams.get('key') ?? '';
   if (!key) return new NextResponse('// Missing key', { status: 400, headers: { 'content-type': 'application/javascript; charset=utf-8' } });
 
-  const host = url.origin;
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  const host = forwardedHost ? `${forwardedProto}://${forwardedHost}` : url.origin;
+  
   const iframeUrl = `${host}/embed/faq?key=${encodeURIComponent(key)}`;
   const js = `
 (function () {

@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type Msg = { role: 'user' | 'assistant'; text: string };
 
@@ -27,8 +27,13 @@ export default function EmbeddedFaqPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
 
-  const key = useMemo(() => getEmbedKey(), []);
-  const sessionId = useMemo(() => getSessionId(), []);
+  const [key, setKey] = useState('');
+  const [sessionId, setSessionId] = useState('');
+
+  useEffect(() => {
+    setKey(getEmbedKey());
+    setSessionId(getSessionId());
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();

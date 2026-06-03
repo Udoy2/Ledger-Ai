@@ -15,6 +15,8 @@ export function getFaqConfig(token: unknown) {
 
 export function originAllowed(origin: string | null, allowlist: string[]) {
   if (!allowlist.length) return true;
+  // Always allow localhost origins for local development & testing
+  if (origin && /^https?:\/\/localhost(:\d+)?$/.test(origin)) return true;
   if (!origin) return false;
   return allowlist.includes(origin);
 }
