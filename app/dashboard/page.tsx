@@ -209,8 +209,8 @@ export default async function DashboardPage() {
     <div className="min-h-screen flex relative" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       
       {/* 1. Left Sidebar Navigation */}
-      <aside className="glass-sidebar w-64 flex flex-col justify-between shrink-0 sticky top-0 h-screen z-40 p-6">
-        <div className="space-y-8">
+<aside className="glass-sidebar w-64 flex-col justify-between shrink-0 sticky top-0 h-screen z-40 p-6 hidden lg:flex">
+          <div className="space-y-8">
           
           {/* Sidebar Logo */}
           <Link href="/" className="inline-flex items-center gap-2.5 font-extrabold text-md no-underline hover:opacity-90 transition-opacity" style={{ color: 'var(--text-primary)' }}>
@@ -283,13 +283,23 @@ export default async function DashboardPage() {
 
       {/* 2. Main content area on the right */}
       <div className="flex-1 flex flex-col min-w-0 relative">
+
+        {/* Mobile-only top logo bar */}
+<div className="lg:hidden flex items-center justify-between px-4 py-3 border-b" style={{ background: 'var(--bg-base)', borderColor: 'var(--border)' }}>
+  <Link href="/" className="inline-flex items-center gap-2 font-extrabold text-sm no-underline" style={{ color: 'var(--text-primary)' }}>
+    <div className="p-1.5 rounded-lg" style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--border)' }}>
+      <BarChart3 size={15} />
+    </div>
+    <span>LedgerAI</span>
+  </Link>
+  <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full badge-positive">Live</span>
+</div>
         
         {/* Sticky Header with Search and Actions */}
-        <header className="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between gap-4">
-          
+<header className="glass-nav sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between gap-4">          
           {/* Left search bar */}
-          <div className="relative w-72 max-w-full">
-            <Search className="absolute left-3 top-2.5" size={13} style={{ color: 'var(--text-tertiary)' }} />
+<div className="relative w-72 max-w-full hidden sm:block">
+              <Search className="absolute left-3 top-2.5" size={13} style={{ color: 'var(--text-tertiary)' }} />
             <input
               type="text"
               placeholder="Search insights, metrics, telemetry..."
@@ -309,8 +319,8 @@ export default async function DashboardPage() {
         </header>
 
         {/* Greeting Section */}
-        <div className="px-8 pt-8">
-          <div className="glass-card p-6 relative overflow-hidden">
+<div className="px-4 sm:px-8 pt-6 sm:pt-8">
+            <div className="glass-card p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-accent-subtle to-transparent pointer-events-none" />
             <div className="flex flex-col gap-5">
               <div>
@@ -320,22 +330,22 @@ export default async function DashboardPage() {
                   Here is the store intelligence overview today. Trigger automated GA4, Clarity, or seeder scripts below to keep telemetry fresh.
                 </p>
               </div>
-              <div className="border-t pt-4" style={{ borderColor: 'var(--border)' }}>
-                <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
-              </div>
+             <div className="border-t pt-4 overflow-x-auto" style={{ borderColor: 'var(--border)' }}>
+  <DashboardActions hasSignals={signalList.length > 0} liveBackend={liveBackend} />
+</div>
             </div>
           </div>
         </div>
 
         {/* Dynamic Grid Sections */}
-        <div className="px-8 py-6 grid gap-6 lg:grid-cols-[1fr_360px] relative z-10">
-          
+<div className="px-4 sm:px-8 py-4 sm:py-6 grid gap-6 lg:grid-cols-[1fr_360px] relative z-10">
+
           {/* Main Workspace Column */}
           <section className="space-y-6">
             
             {/* KPI Stats widgets */}
-            <div id="stats" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 scroll-mt-24">
-              <Stat label="Ingested Signals" value={signalList.length} detail="Touchpoints monitored" icon={Layers} />
+<div id="stats" className="grid gap-4 grid-cols-2 xl:grid-cols-4 scroll-mt-24">
+                <Stat label="Ingested Signals" value={signalList.length} detail="Touchpoints monitored" icon={Layers} />
               <Stat label="Sentiment Ratio" value={`${pct(positive, signalList.length)}%`} detail="Positive customer sentiment" icon={CheckCircle2} />
               <Stat label="Active Risks" value={urgent} detail="High urgency operational traps" icon={AlertTriangle} />
               <Stat label="Generated Reports" value={report ? '1+' : '0'} detail="AI summary sheets ready" icon={BookText} />
@@ -343,7 +353,7 @@ export default async function DashboardPage() {
 
             {/* AI Report Card */}
             <div id="report" className="glass-card p-6 relative overflow-hidden scroll-mt-24">
-              <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'var(--accent)' }} />
+              <div className="absolute top-0 right-0 w-40 sm:w-80 h-full bg-gradient-to-l from-accent-subtle to-transparent pointer-events-none"/>
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
                   <p className="mono-label text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-tertiary)' }}>Synthesis Report</p>
@@ -579,5 +589,7 @@ export default async function DashboardPage() {
         </div>
       </div>
     </div>
+
+    
   );
 }
