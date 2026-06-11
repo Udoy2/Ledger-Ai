@@ -272,6 +272,401 @@ html.dark .glass-stat:hover {
 button, input, textarea, select { font: inherit; }
 
 /* ============================================================
+   LANDING PAGE EXPERIENCE
+   Scoped to app/page.tsx so dashboard/auth glass styles remain stable.
+   ============================================================ */
+
+.landing-page {
+  background:
+    radial-gradient(circle at 50% 8%, rgba(16, 185, 129, 0.14), transparent 34rem),
+    radial-gradient(circle at 12% 78%, rgba(20, 184, 166, 0.10), transparent 28rem),
+    #050807;
+}
+
+.landing-nav {
+  background: rgba(5, 8, 7, 0);
+  border-bottom: 1px solid rgba(255, 255, 255, 0);
+  transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, backdrop-filter 0.28s ease;
+}
+
+.landing-nav-scrolled {
+  background: rgba(5, 8, 7, 0.72);
+  border-bottom-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+}
+
+.landing-grid-bg,
+.landing-grid-bg::after,
+.landing-beams,
+.landing-hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landing-grid-bg {
+  background-image:
+    radial-gradient(circle, rgba(52, 211, 153, 0.22) 1px, transparent 1.4px),
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px, 72px 72px, 72px 72px;
+  mask-image: radial-gradient(circle at center, black 0%, black 48%, transparent 78%);
+  animation: landing-grid-drift 20s linear infinite;
+  opacity: 0.72;
+}
+
+.landing-grid-bg::after {
+  content: '';
+  background: linear-gradient(to bottom, transparent, #050807 92%);
+}
+
+.landing-beams {
+  background:
+    linear-gradient(120deg, transparent 0 42%, rgba(16, 185, 129, 0.16) 46%, transparent 51%),
+    linear-gradient(62deg, transparent 0 62%, rgba(255, 255, 255, 0.08) 66%, transparent 70%);
+  background-size: 160% 160%;
+  animation: landing-beam-sweep 9s ease-in-out infinite alternate;
+  opacity: 0.72;
+}
+
+.landing-hero-glow {
+  background:
+    radial-gradient(circle at 64% 42%, rgba(16, 185, 129, 0.22), transparent 28rem),
+    radial-gradient(circle at 34% 32%, rgba(255, 255, 255, 0.08), transparent 22rem);
+}
+
+.landing-headline {
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.landing-typewriter {
+  display: inline-block;
+  max-width: max-content;
+  overflow: hidden;
+  border-right: 0.08em solid rgba(52, 211, 153, 0.85);
+  white-space: nowrap;
+  animation:
+    landing-type 1.8s steps(16, end) 0.2s both,
+    landing-caret 0.8s step-end infinite;
+}
+
+.landing-unified {
+  color: #6ee7b7;
+  text-shadow:
+    0 0 16px rgba(16, 185, 129, 0.72),
+    0 0 44px rgba(16, 185, 129, 0.50),
+    0 0 86px rgba(16, 185, 129, 0.36);
+}
+
+.landing-button {
+  background: linear-gradient(135deg, #6ee7b7, #10b981 52%, #a7f3d0);
+  box-shadow:
+    0 0 0 1px rgba(167, 243, 208, 0.35) inset,
+    0 12px 34px rgba(16, 185, 129, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.landing-button:hover {
+  transform: translateY(-2px);
+  filter: saturate(1.08);
+  box-shadow:
+    0 0 0 1px rgba(236, 253, 245, 0.58) inset,
+    0 18px 46px rgba(16, 185, 129, 0.42);
+}
+
+.landing-button-large {
+  animation: landing-button-pulse 2.8s ease-in-out infinite;
+}
+
+.landing-terminal {
+  overflow: hidden;
+  border: 1px solid rgba(110, 231, 183, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(3, 10, 7, 0.84);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 30px 90px rgba(0, 0, 0, 0.62),
+    0 0 84px rgba(16, 185, 129, 0.18);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+.landing-terminal::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(120deg, transparent, rgba(110, 231, 183, 0.14), transparent);
+  transform: translateX(-110%);
+  animation: landing-terminal-scan 6s ease-in-out infinite;
+}
+
+.landing-terminal-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.95rem 1.25rem;
+}
+
+.landing-status-dot,
+.landing-pill {
+  display: inline-flex;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: #34d399;
+  box-shadow: 0 0 16px rgba(52, 211, 153, 0.85);
+}
+
+.landing-status-dot {
+  animation: landing-status-pulse 1.45s ease-in-out infinite;
+}
+
+.landing-pill-danger {
+  background: #fb7185;
+  box-shadow: 0 0 16px rgba(251, 113, 133, 0.65);
+}
+
+.landing-pill-info {
+  background: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.60);
+}
+
+.landing-insight-line {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: landing-insight-in 0.55s ease forwards;
+  animation-delay: calc(1.2s + (var(--line-index) * 0.75s));
+}
+
+.landing-typed-text {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 0;
+  animation: landing-terminal-type 1.2s steps(62, end) forwards;
+  animation-delay: calc(1.45s + (var(--line-index) * 0.75s));
+}
+
+.landing-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+}
+
+.landing-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 0.75rem;
+  animation: landing-marquee 24s linear infinite;
+}
+
+.landing-logo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: max-content;
+  border: 1px solid rgba(110, 231, 183, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0.7rem 1rem;
+  color: rgba(236, 253, 245, 0.76);
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.04);
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.landing-logo-pill:hover {
+  border-color: rgba(110, 231, 183, 0.46);
+  color: white;
+  box-shadow: 0 0 34px rgba(16, 185, 129, 0.18);
+  transform: translateY(-1px);
+}
+
+.landing-steps::before {
+  content: '';
+  position: absolute;
+  left: 1.5rem;
+  right: 1.5rem;
+  top: 2rem;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.65), rgba(16, 185, 129, 0.06));
+  transform-origin: left;
+  animation: landing-step-line 3s ease-in-out infinite alternate;
+}
+
+.landing-step {
+  position: relative;
+  min-height: 19rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.022));
+  padding: 1.4rem;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.58s ease, transform 0.58s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition-delay: calc(var(--step-index) * 90ms);
+}
+
+.landing-step-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.landing-step:hover {
+  border-color: rgba(110, 231, 183, 0.28);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28), 0 0 36px rgba(16, 185, 129, 0.08);
+}
+
+.landing-step-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 4rem;
+  height: 4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(167, 243, 208, 0.32);
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 20%, rgba(236, 253, 245, 0.36), rgba(16, 185, 129, 0.18) 38%, rgba(5, 8, 7, 0.92));
+  color: #a7f3d0;
+  box-shadow: 0 0 42px rgba(16, 185, 129, 0.24);
+}
+
+.landing-cta {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.20), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.36);
+}
+
+.landing-cta-glow {
+  position: absolute;
+  inset: -35%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.34), transparent 34%);
+  animation: landing-cta-glow 5s ease-in-out infinite alternate;
+}
+
+@keyframes landing-grid-drift {
+  to { background-position: 30px 30px, 72px 72px, 72px 72px; }
+}
+
+@keyframes landing-beam-sweep {
+  from { background-position: 0% 0%; }
+  to { background-position: 100% 100%; }
+}
+
+@keyframes landing-type {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes landing-caret {
+  50% { border-color: transparent; }
+}
+
+@keyframes landing-terminal-scan {
+  0%, 42% { transform: translateX(-110%); }
+  68%, 100% { transform: translateX(110%); }
+}
+
+@keyframes landing-status-pulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.72; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes landing-insight-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes landing-terminal-type {
+  to { max-width: 100%; }
+}
+
+@keyframes landing-marquee {
+  to { transform: translateX(-50%); }
+}
+
+@keyframes landing-step-line {
+  from { transform: scaleX(0.35); opacity: 0.42; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes landing-cta-glow {
+  from { transform: scale(0.82); opacity: 0.72; }
+  to { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes landing-button-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(167, 243, 208, 0.35) inset, 0 12px 34px rgba(16, 185, 129, 0.28); }
+  50% { box-shadow: 0 0 0 1px rgba(236, 253, 245, 0.58) inset, 0 18px 54px rgba(16, 185, 129, 0.48); }
+}
+
+@media (max-width: 1023px) {
+  .landing-steps::before {
+    bottom: 1.5rem;
+    left: 2rem;
+    top: 2rem;
+    width: 1px;
+    height: auto;
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.65), rgba(16, 185, 129, 0.06));
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-typewriter {
+    white-space: normal;
+    border-right: 0;
+    animation: none;
+  }
+
+  .landing-terminal {
+    border-radius: 14px;
+  }
+
+  .landing-typed-text {
+    white-space: normal;
+    max-width: none;
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-grid-bg,
+  .landing-beams,
+  .landing-typewriter,
+  .landing-button-large,
+  .landing-terminal::before,
+  .landing-status-dot,
+  .landing-insight-line,
+  .landing-typed-text,
+  .landing-marquee-track,
+  .landing-steps::before,
+  .landing-cta-glow {
+    animation: none !important;
+  }
+
+  .landing-insight-line,
+  .landing-step {
+    opacity: 1;
+    transform: none;
+  }
+
+  .landing-typed-text {
+    max-width: none;
+  }
+}
+
+/* ============================================================
    DESIGN TOKEN UTILITIES
    (These override Tailwind classes to use our token system)
    ============================================================ */
