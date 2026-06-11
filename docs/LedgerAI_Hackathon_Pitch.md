@@ -1,4 +1,4 @@
-# PulseDesk Hackathon Pitch Deck
+# LedgerAI Hackathon Pitch Deck
 
 ## Slide 1: LedgerAI
 
