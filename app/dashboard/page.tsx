@@ -396,7 +396,7 @@ export default async function DashboardPage() {
               <div className="mt-5 space-y-4">
                 {recommendations.length === 0 ? (
                   <div className="rounded-xl p-5 text-center text-xs border" style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-                    ⚡ Click "Run AI CTO" in the command center to trigger the multi-step agent loop and view recommendations.
+                    ⚡ Click "Run AI CFO" in the command center to trigger the multi-step agent loop and view recommendations.
                   </div>
                 ) : (
                   recommendations.map((rec) => (
@@ -536,7 +536,7 @@ export default async function DashboardPage() {
               <div className="mt-4 space-y-4">
                 {!latestRun ? (
                   <div className="rounded-xl border p-4 text-center text-xs leading-relaxed" style={{ borderColor: 'var(--border)', color: 'var(--text-tertiary)', background: 'var(--bg-elevated)' }}>
-                    🤖 Run "AI CTO" to see active agent trace logs and LTM fact boards.
+                    🤖 Run "AI CFO" to see active agent trace logs and LTM fact boards.
                   </div>
                 ) : (
                   <div className="space-y-4">

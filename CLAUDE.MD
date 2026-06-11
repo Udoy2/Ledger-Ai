@@ -14,7 +14,7 @@ Compact working memory for agents. Read this first, then inspect only the files 
 - `README.md`: setup, user flow, API endpoint list.
 - `prd.md`, `project_review.md`, `docs/`: product and judging context.
 - `app/dashboard/page.tsx`: main server dashboard, auth gate, Supabase reads, demo fallback.
-- `components/DashboardClient.tsx`: dashboard actions for seed/report/connect/sync/AI CTO.
+- `components/DashboardClient.tsx`: dashboard actions for seed/report/connect/sync/AI CFO.
 - `components/RagChat.tsx`, `lib/rag.ts`, `lib/hybrid-rag.ts`: chat and retrieval logic.
 - `app/api/**/route.ts`: all backend API routes and cron/connectors.
 - `lib/supabase/server.ts`: SSR Supabase client with cookie handling.

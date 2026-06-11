@@ -14,7 +14,6 @@ import {
   Radar,
   Zap,
 } from 'lucide-react';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { hasSupabaseEnv } from '@/lib/env';
 import { createClient } from '@/lib/supabase/client';
 
@@ -165,7 +164,6 @@ export default function HomePage() {
           </Link>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle />
             {authStatus === 'checking' ? (
               <span className="h-10 w-28 rounded-lg border border-white/[0.08] bg-white/[0.04]" aria-hidden="true" />
             ) : authStatus === 'authed' ? (

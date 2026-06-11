@@ -6,7 +6,7 @@
 
 ## Summary
 
-The project has **significantly exceeded the original MVP PRD scope**. The original `prd.md` scoped a basic signal dashboard with AI tagging + fallback reports. The codebase now implements a full **AI CTO orchestration system**, **hybrid RAG retrieval**, **FAQ widget**, **Microsoft Clarity integration**, and a **knowledge graph** — all documented in the newer `JUDGE_PRD.md`.
+The project has **significantly exceeded the original MVP PRD scope**. The original `prd.md` scoped a basic signal dashboard with AI tagging + fallback reports. The codebase now implements a full **AI CFO orchestration system**, **hybrid RAG retrieval**, **FAQ widget**, **Microsoft Clarity integration**, and a **knowledge graph** — all documented in the newer `JUDGE_PRD.md`.
 
 ---
 
@@ -36,7 +36,7 @@ The project has **significantly exceeded the original MVP PRD scope**. The origi
 |---|---------|-------------------|----------------|-------|
 | 14 | **Hybrid RAG Retrieval** | §7 Retrieval | [hybrid-rag.ts](file:///d:/Hackations/Pulse-Desk/lib/hybrid-rag.ts) | Vector + keyword + reranking with recency/urgency boosts |
 | 15 | **RAG Chat Endpoint** | §10.5 | `app/api/chat/route.ts`, [RagChat.tsx](file:///d:/Hackations/Pulse-Desk/components/RagChat.tsx) | Grounded response generation |
-| 16 | **AI CTO Orchestrator** | §8 Agent Model | [app/api/cto/run/route.ts](file:///d:/Hackations/Pulse-Desk/app/api/cto/run) (~11KB) | Multi-agent: DataQuality, Metric, Strategy, Critic, Memory agents |
+| 16 | **AI CFO Orchestrator** | §8 Agent Model | [app/api/cfo/run/route.ts](file:///d:/Hackations/Pulse-Desk/app/api/cfo/run) (~11KB) | Multi-agent: DataQuality, Metric, Strategy, Critic, Memory agents |
 | 17 | **Recommendations System** | §8 | Schema + dashboard display | With evidence IDs, impact/effort/confidence scoring |
 | 18 | **Memory Persistence** | §8 | `memories` table + dashboard display | Key-value facts with confidence scores |
 | 19 | **Agent Trace / Tool Calls** | §8 | `ai_runs` + `tool_calls` tables + UI | Full orchestration step visibility |
@@ -106,7 +106,7 @@ graph TB
         SEED["/api/seed"]
         REPORT["/api/report/generate"]
         CHAT["/api/chat"]
-        CTO["/api/cto/run"]
+        CFO["/api/cfo/run"]
         CRON_GA4["/api/cron/collect/ga4 ✅"]
         CRON_CLARITY["/api/cron/collect/clarity ✅"]
         CRON_SHOPIFY["/api/cron/collect/shopify 🟡"]
@@ -128,11 +128,11 @@ graph TB
         PINE["Pinecone (vector index)"]
     end
 
-    DASH --> INGEST & SEED & REPORT & CHAT & CTO
+    DASH --> INGEST & SEED & REPORT & CHAT & CFO
     EMBED --> FAQ_CHAT
     INGEST --> GROQ --> SUPA
     INGEST --> INDEX --> EMBEDDINGS --> PINE
-    CTO --> RAG --> PINE & SUPA
+    CFO --> RAG --> PINE & SUPA
     CHAT --> RAG
     CRON_GA4 & CRON_CLARITY --> CONNECTORS --> SUPA & PINE
 ```
@@ -152,7 +152,7 @@ graph TB
 
 ### Strengths
 - 🏗️ **Solid infra foundation** — 10-table schema, full RLS, connector framework, vector indexing pipeline
-- 🤖 **AI CTO orchestrator** with trace + memory is a significant differentiator
+- 🤖 **AI CFO orchestrator** with trace + memory is a significant differentiator
 - 🔍 **Hybrid RAG** with synonym expansion, recency/urgency boosting is production-quality retrieval
 - 🔌 **FAQ widget** is a full end-to-end feature (embed script → chat → signal feedback loop)
 - 💰 **Free-tier viable** — Supabase + Groq + Pinecone all on free plans

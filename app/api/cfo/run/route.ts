@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const prompt = typeof body?.prompt === 'string' && body.prompt.trim()
     ? body.prompt.trim()
-    : 'Run AI CTO loop and produce evidence-backed recommendations.';
+    : 'Run AI CFO loop and produce evidence-backed recommendations.';
 
   const { data: aiRun, error: runError } = await supabase
     .from('ai_runs')
@@ -182,7 +182,7 @@ export async function POST(request: Request) {
         business_id: business.id,
         ai_run_id: aiRun?.id ?? null,
         kind: 'fact',
-        key: 'last_cto_focus',
+        key: 'last_cfo_focus',
         value: String(savedRecs?.[0]?.title ?? 'General growth and operations'),
         confidence: 0.72,
         source: 'MemoryAgent',
@@ -191,7 +191,7 @@ export async function POST(request: Request) {
         business_id: business.id,
         ai_run_id: aiRun?.id ?? null,
         kind: 'pattern',
-        key: 'last_cto_risk',
+        key: 'last_cfo_risk',
         value: summary.urgent > 0 ? 'Urgent friction detected in customer journey.' : 'No urgent friction detected.',
         confidence: 0.67,
         source: 'MemoryAgent',
@@ -209,9 +209,9 @@ export async function POST(request: Request) {
     const entityMap = new Map<string, string>();
     if (persistentMode) {
       const settled = await Promise.all(
-        entityRows.map((entity) =>
-          supabase.from('entities').upsert(entity, { onConflict: 'business_id,kind,name' }).select('id, name').single(),
-        ),
+          entityRows.map((entity) =>
+              supabase.from('entities').upsert(entity, { onConflict: 'business_id,kind,name' }).select('id, name').single(),
+          ),
       );
       for (const res of settled) {
         const data = (res as any)?.data;
@@ -230,51 +230,51 @@ export async function POST(request: Request) {
     }
 
     toolTrace.push(
-      {
-        step: 'strategy',
-        tool_name: 'StrategyAgent',
-        status: 'success',
-        input: { model: groq ? AI_MODELS.smart : 'fallback' },
-        output: { recommendations_created: savedRecs?.length ?? 0 },
-      },
-      {
-        step: 'critic',
-        tool_name: 'CriticAgentDeterministic',
-        status: 'success',
-        input: { constraints: ['title', 'rationale', 'metric_to_watch', 'confidence>=0.45'] },
-        output: { passed_recommendations: recommendations.length },
-      },
-      {
-        step: 'memory',
-        tool_name: 'MemoryAgent',
-        status: 'success',
-        input: { memories_written: memoryRows.length },
-        output: { graph_entities_upserted: entityMap.size },
-      },
+        {
+          step: 'strategy',
+          tool_name: 'StrategyAgent',
+          status: 'success',
+          input: { model: groq ? AI_MODELS.smart : 'fallback' },
+          output: { recommendations_created: savedRecs?.length ?? 0 },
+        },
+        {
+          step: 'critic',
+          tool_name: 'CriticAgentDeterministic',
+          status: 'success',
+          input: { constraints: ['title', 'rationale', 'metric_to_watch', 'confidence>=0.45'] },
+          output: { passed_recommendations: recommendations.length },
+        },
+        {
+          step: 'memory',
+          tool_name: 'MemoryAgent',
+          status: 'success',
+          input: { memories_written: memoryRows.length },
+          output: { graph_entities_upserted: entityMap.size },
+        },
     );
 
     if (persistentMode && aiRun) {
       await supabase.from('tool_calls').insert(
-        toolTrace.map((row) => ({
-          ai_run_id: aiRun.id,
-          business_id: business.id,
-          ...row,
-        })),
+          toolTrace.map((row) => ({
+            ai_run_id: aiRun.id,
+            business_id: business.id,
+            ...row,
+          })),
       );
     }
 
     if (persistentMode && aiRun) await supabase
-      .from('ai_runs')
-      .update({
-        status: 'completed',
-        finished_at: new Date().toISOString(),
-        output_summary: {
-          recommendations_created: savedRecs?.length ?? 0,
-          retrieved_count: hybrid.matches.length,
-          source_coverage: Object.keys(summary.bySource),
-        },
-      })
-      .eq('id', aiRun.id);
+        .from('ai_runs')
+        .update({
+          status: 'completed',
+          finished_at: new Date().toISOString(),
+          output_summary: {
+            recommendations_created: savedRecs?.length ?? 0,
+            retrieved_count: hybrid.matches.length,
+            source_coverage: Object.keys(summary.bySource),
+          },
+        })
+        .eq('id', aiRun.id);
 
     return NextResponse.json({
       success: true,
@@ -287,13 +287,13 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (persistentMode && aiRun) await supabase
-      .from('ai_runs')
-      .update({
-        status: 'failed',
-        finished_at: new Date().toISOString(),
-        error_message: error instanceof Error ? error.message : 'Unknown error',
-      })
-      .eq('id', aiRun.id);
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to run CTO orchestration' }, { status: 500 });
+        .from('ai_runs')
+        .update({
+          status: 'failed',
+          finished_at: new Date().toISOString(),
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+        })
+        .eq('id', aiRun.id);
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to run CFO orchestration' }, { status: 500 });
   }
 }

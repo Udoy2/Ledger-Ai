@@ -140,7 +140,7 @@ This guarantees “answer from uploaded docs only” behavior.
 
 ## 8. Agent and Orchestration Model
 
-Route: `POST /api/cto/run`
+Route: `POST /api/cfo/run`
 
 Agent graph (lightweight, not over-engineered):
 - `DataQualityAgent`
@@ -220,7 +220,7 @@ Goal: one-script integration for business websites.
 2. Connects one or more sources (GA4, Clarity, FAQ widget).  
 3. Signals are collected and normalized into `signals`.  
 4. Signals are chunked and indexed into Pinecone.  
-5. Owner runs report or AI CTO orchestrator.  
+5. Owner runs report or AI CFO orchestrator.  
 6. Hybrid retrieval selects relevant evidence.  
 7. LLM produces structured recommendations (or deterministic fallback).  
 8. Recommendations, trace, memory are persisted.  
@@ -254,7 +254,7 @@ Frontend optimizations:
    Keyword retrieval path still returns candidates.
 
 3. **Missing AI infra tables**  
-   CTO route supports stateless mode while warning about persistence.
+   CFO route supports stateless mode while warning about persistence.
 
 4. **Integration token invalid**  
    Collectors degrade to demo mode or emit explicit auth errors.
@@ -324,7 +324,7 @@ This combination is difficult to replicate with a generic chatbot wrapper.
 Implemented:
 - multi-source ingestion foundation
 - hybrid RAG
-- AI CTO orchestration with trace
+- AI CFO orchestration with trace
 - FAQ widget + doc-only answer mode
 - memory + recommendation persistence
 - performance and bloat reductions across frontend/backend

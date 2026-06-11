@@ -113,13 +113,13 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
         </button>
 
         <button
-          onClick={() => run('/api/cto/run')}
+          onClick={() => run('/api/cfo/run')}
           disabled={pending || !liveBackend}
           className={btnBase}
           title="Run multi-agent AI orchestrator"
         >
           <Bot size={13} style={{ color: '#a78bfa' }} />
-          Run AI CTO
+          Run AI CFO
         </button>
 
         {/* Primary CTA — right-aligned */}

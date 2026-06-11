@@ -45,7 +45,7 @@ User-facing features:
 - KPI overview and signal feed
 - AI-generated executive report
 - RAG-powered analyst chat
-- AI CTO recommendations
+- AI CFO recommendations
 - evidence drawer for recommendation support
 - orchestration logs and memory
 - FAQ widget that turns customer questions into new signals
@@ -129,17 +129,17 @@ AI tasks:
 - **Report generation:** executive summary and action list
 - **Analyst chat:** grounded Q&A over business signals
 - **FAQ assistant:** customer-facing answers from uploaded docs only
-- **AI CTO:** strategic recommendations with evidence
+- **AI CFO:** strategic recommendations with evidence
 
 Model routing:
 
 - **Fast model:** tagging, FAQ, analyst chat
-- **Smart model:** executive reports and AI CTO strategy
+- **Smart model:** executive reports and AI CFO strategy
 - **Embedding model:** vector indexing and semantic retrieval
 
 Efficiency decisions:
 
-- one strategic LLM call inside CTO orchestration,
+- one strategic LLM call inside CFO orchestration,
 - deterministic critic filtering,
 - deterministic query rewrite,
 - fallback reports and extractive answers when Groq is unavailable,
@@ -177,9 +177,9 @@ Result: better evidence retrieval with lower hallucination risk.
 
 ---
 
-## Slide 8: AI CTO Orchestration
+## Slide 8: AI CFO Orchestration
 
-LedgerAI includes a lightweight AI CTO workflow.
+LedgerAI includes a lightweight AI CFO workflow.
 
 Agents/stages:
 
