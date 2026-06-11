@@ -1,8 +1,8 @@
-# PulseDesk Technical PRD
+# LedgerAI Technical PRD
 
 ## 1. Design Philosophy
 
-PulseDesk is designed as an **operator-first intelligence system** for small and medium businesses. The product is intentionally opinionated:
+LedgerAI is designed as an **operator-first intelligence system** for small and medium businesses. The product is intentionally opinionated:
 
 1. **Evidence before opinion**  
    Every recommendation should be backed by raw customer/behavior signals and retrievable evidence IDs.
@@ -28,7 +28,7 @@ Businesses have fragmented insight surfaces:
 - Review tools show sentiment but not conversion context.
 - Support/FAQ chats show objections but are often unstructured.
 
-PulseDesk unifies these signals to answer:
+LedgerAI unifies these signals to answer:
 - What is the most important issue right now?
 - Which action has the best impact/effort ratio?
 - What evidence supports this recommendation?

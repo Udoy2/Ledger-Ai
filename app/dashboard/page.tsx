@@ -22,7 +22,7 @@ import {
   Grid,
   HelpCircle,
   FileText,
-  Search,
+
   User,
   Sliders,
 } from 'lucide-react';
@@ -295,27 +295,14 @@ export default async function DashboardPage() {
   <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-full badge-positive">Live</span>
 </div>
         
-        {/* Sticky Header with Search and Actions */}
-<header className="glass-nav sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-between gap-4">          
-          {/* Left search bar */}
-<div className="relative w-72 max-w-full hidden sm:block">
-              <Search className="absolute left-3 top-2.5" size={13} style={{ color: 'var(--text-tertiary)' }} />
-            <input
-              type="text"
-              placeholder="Search insights, metrics, telemetry..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs"
-            />
-          </div>
-
-          {/* Right Header Actions */}
-          <div className="flex items-center gap-3">
+        {/* Sticky Header with Actions */}
+<header className="glass-nav sticky top-0 z-30 px-4 sm:px-8 py-4 flex items-center justify-end gap-3">
             <ThemeToggle />
             <div style={{ width: '1px', height: '20px', background: 'var(--border)' }} />
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider badge-positive shrink-0 shadow-sm">
               <span className="pulse-dot" />
               Live Feed
             </span>
-          </div>
         </header>
 
         {/* Greeting Section */}

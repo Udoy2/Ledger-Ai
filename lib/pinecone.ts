@@ -47,3 +47,13 @@ export async function queryVector(
   return resp.matches;
 }
 
+/** Delete all vectors in a namespace (wipes all embeddings for a business) */
+export async function deleteNamespace(namespace: string) {
+  try {
+    const index = getIndex();
+    await index.namespace(namespace).deleteAll();
+  } catch {
+    // Silently ignore if namespace doesn't exist
+  }
+}
+
