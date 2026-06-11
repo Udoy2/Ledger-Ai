@@ -1,12 +1,12 @@
 # PulseDesk Hackathon Pitch Deck
 
-## Slide 1: PulseDesk
+## Slide 1: LedgerAI
 
-# PulseDesk
+# LedgerAI
 
 ### AI-powered SME intelligence dashboard
 
-**Most dashboards tell SMEs what happened. PulseDesk tells them what to do next, why, and what evidence proves it.**
+**Most dashboards tell SMEs what happened. LedgerAI tells them what to do next, why, and what evidence proves it.**
 
 Hackathon challenge: **SME Dashboard**
 
@@ -26,13 +26,13 @@ Most SMEs do not have a data analyst, BI team, or growth operations team. They n
 - recommend practical next steps,
 - connect every recommendation back to evidence.
 
-PulseDesk gives SME owners a lightweight intelligence loop usually only available to larger companies.
+LedgerAI gives SME owners a lightweight intelligence loop usually only available to larger companies.
 
 ---
 
 ## Slide 3: Product Solution
 
-PulseDesk is an operator-first dashboard that turns multi-source business signals into decisions.
+LedgerAI is an operator-first dashboard that turns multi-source business signals into decisions.
 
 Core product loop:
 
@@ -89,7 +89,7 @@ Deployment-ready pieces:
 
 ## Slide 5: Data Model and Signal Layer
 
-PulseDesk is built around one canonical ledger: `signals`.
+LedgerAI is built around one canonical ledger: `signals`.
 
 Each signal stores:
 
@@ -121,7 +121,7 @@ This lets the dashboard, RAG system, reports, and agents all operate from the sa
 
 ## Slide 6: AI Usage and Model Strategy
 
-PulseDesk uses AI where it adds decision value, and deterministic logic where reliability/cost matters.
+LedgerAi uses AI where it adds decision value, and deterministic logic where reliability/cost matters.
 
 AI tasks:
 
@@ -149,7 +149,7 @@ Efficiency decisions:
 
 ## Slide 7: Hybrid RAG Pipeline
 
-PulseDesk uses hybrid RAG because SME data is sparse, noisy, and short-form.
+LedgerAI uses hybrid RAG because SME data is sparse, noisy, and short-form.
 
 Pipeline:
 
@@ -179,7 +179,7 @@ Result: better evidence retrieval with lower hallucination risk.
 
 ## Slide 8: AI CTO Orchestration
 
-PulseDesk includes a lightweight AI CTO workflow.
+LedgerAI includes a lightweight AI CTO workflow.
 
 Agents/stages:
 
@@ -212,7 +212,7 @@ This makes the AI process inspectable rather than a black box.
 
 ## Slide 9: FAQ Widget and Learning Loop
 
-PulseDesk includes an embeddable FAQ assistant for SME websites.
+LedgerAI includes an embeddable FAQ assistant for SME websites.
 
 Technical flow:
 
@@ -270,11 +270,11 @@ Free-tier viability:
 
 ## Slide 11: Closing
 
-# PulseDesk
+# LedgerAI
 
 ### An AI dashboard for SME operators.
 
-PulseDesk helps small businesses:
+LedgerAI helps small businesses:
 
 - understand performance,
 - identify risks,
