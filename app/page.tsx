@@ -210,9 +210,6 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(440px,480px)] lg:pb-20">
           <div className="max-w-4xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/[0.08] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
-              AI command center for ecommerce
-            </div>
 
             <h1 className="landing-headline font-mono text-[clamp(2.75rem,5.8vw,4.8rem)] font-black leading-[0.96] text-white">
               <span className="landing-typewriter">Your store data</span>
