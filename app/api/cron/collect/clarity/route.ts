@@ -45,8 +45,13 @@ async function handleManual(options: PullOptions) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const result = await runForBusiness(supabase, business, options);
-  return NextResponse.json({ success: true, mode: business.google_token ? 'api' : 'demo', options, ...result });
+  try {
+    const result = await runForBusiness(supabase, business, options);
+    return NextResponse.json({ success: true, mode: business.google_token ? 'api' : 'demo', options, ...result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Clarity sync failed';
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }
 
 async function handleCron(options: PullOptions) {

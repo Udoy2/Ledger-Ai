@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Bot, DatabaseZap, Link, RefreshCw, Sparkles } from 'lucide-react';
+import { Activity, Bot, DatabaseZap, Link, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 
 type DashboardClientProps = {
   hasSignals: boolean;
@@ -39,20 +39,25 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
   }
 
   async function connectClarity() {
-    const token = window.prompt('Paste Microsoft Clarity Data Export API token');
+    const token = window.prompt('Paste your Microsoft Clarity Data Export API token');
     if (!token) return;
+    // Save token first
     await run('/api/integrations/clarity/connect', { clarity_api_token: token });
+    // Automatically sync the last 30 days right after connecting
+    await run('/api/cron/collect/clarity', { numOfDays: 3, dimension1: 'URL' });
   }
 
   async function syncClarity() {
-    const raw = window.prompt('Clarity window in days (1-3)', '1');
-    if (!raw) return;
-    const num = Number(raw);
-    if (!Number.isFinite(num) || num < 1 || num > 3) {
-      setError('Clarity numOfDays must be between 1 and 3.');
-      return;
-    }
-    await run('/api/cron/collect/clarity', { numOfDays: num, dimension1: 'URL' });
+    // Re-pull the last 30 days of Clarity data
+    await run('/api/cron/collect/clarity', { numOfDays: 3, dimension1: 'URL' });
+  }
+
+  async function clearData() {
+    const confirmed = window.confirm(
+      'This will permanently delete all signals, reports, AI runs, recommendations, memories, and vector embeddings for your workspace.\n\nAre you sure?',
+    );
+    if (!confirmed) return;
+    await run('/api/reset');
   }
 
   const btnBase =
@@ -122,8 +127,18 @@ export function DashboardActions({ hasSignals, liveBackend = true }: DashboardCl
           Run AI CFO
         </button>
 
-        {/* Primary CTA — right-aligned */}
-        <div className="flex-1 flex justify-end">
+        {/* Primary CTA row — clear data (destructive) + generate report */}
+        <div className="flex-1 flex justify-end items-center gap-2">
+          <button
+            onClick={clearData}
+            disabled={pending || !liveBackend}
+            className={btnBase}
+            title="Delete all signals, reports, and vector embeddings for this workspace"
+            style={{ color: 'var(--red)', borderColor: 'rgba(239,68,68,0.3)' }}
+          >
+            <Trash2 size={13} style={{ color: 'var(--red)' }} />
+            Clear Data
+          </button>
           <button
             onClick={() => run('/api/report/generate')}
             disabled={pending || !liveBackend}
